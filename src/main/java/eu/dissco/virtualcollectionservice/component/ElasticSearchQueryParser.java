@@ -33,7 +33,7 @@ public class ElasticSearchQueryParser {
   }
 
   private static Query handleSinglePredicate(TargetDigitalObjectFilter filter) {
-    log.debug("Assuming this is an individual predicate");
+    log.debug("Assuming this is an individual predicate: {}", filter);
     var predicateType = filter.getOdsPredicateType();
     var harmonizedValues = harmonizeValues(filter.getOdsPredicateValue(),
         filter.getOdsPredicateValues());
@@ -42,7 +42,7 @@ public class ElasticSearchQueryParser {
   }
 
   private static Query handleMultiplePredicates(TargetDigitalObjectFilter filter) {
-    log.debug("Assuming this is a list of predicates");
+    log.debug("Assuming this is a list of predicates: {}", filter);
     var parsedQueries = new ArrayList<Query>();
     filter.getOdsHasPredicates().stream().map(
             predicate -> getQueryFromPredicate(
@@ -93,7 +93,14 @@ public class ElasticSearchQueryParser {
     }
   }
 
-  // It makes an assumption that all values in a list are of the same type
+  /**
+   * Assumption: All values in the predicateValue list are of the same type.
+   * The method checks the type of the first element to determine whether to append
+   *  .keyword to the sanitized key (for String values). If the list contains
+   * mixed types, this may result in incorrect query construction or runtime errors.
+   * Callers must ensure that predicateValue contains only
+   * elements of a single type, and that the first element is representative of the entire list.
+   */
   private static String sanitizeKey(String predicateKey, List<Object> predicateValue) {
     var sanitizedKey = predicateKey.replace("'", "")
         .replace("[*]", "")

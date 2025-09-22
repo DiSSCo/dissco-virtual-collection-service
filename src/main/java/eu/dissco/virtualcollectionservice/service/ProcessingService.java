@@ -26,12 +26,12 @@ public class ProcessingService {
         virtualCollectionEvent.action(), virtualCollectionEvent.virtualCollection().getId());
     var filter = virtualCollectionEvent.virtualCollection().getOdsHasTargetDigitalObjectFilter();
     var elasticQuery = parseTargetFilterToQuery(filter);
-    processRequest(elasticQuery);
-    log.debug("Assuming this is an individual predicate");
+    var totalResult = processRequest(elasticQuery);
+    log.info("Successfully finished processing all results: {} ", totalResult);
   }
 
 
-  private void processRequest(Query elasticQuery) throws IOException {
+  private long processRequest(Query elasticQuery) throws IOException {
     boolean keepSearching = true;
     long resultsProcessed = 0;
     String lastId = null;
@@ -47,6 +47,7 @@ public class ProcessingService {
         resultsProcessed += searchResult.size();
       }
     }
+    return resultsProcessed;
   }
 
   private void processSearchResult(List<JsonNode> searchResult) {
