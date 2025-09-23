@@ -1,6 +1,6 @@
 package eu.dissco.virtualcollectionservice.configuration;
 
-import static eu.dissco.virtualcollectionservice.configuration.ApplicationConfiguration.DATE_STRING;
+import static eu.dissco.virtualcollectionservice.utils.ApplicationUtils.DATE_STRING;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
