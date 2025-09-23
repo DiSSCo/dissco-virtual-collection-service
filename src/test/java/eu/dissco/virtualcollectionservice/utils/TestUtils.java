@@ -5,19 +5,38 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.dissco.virtualcollectionservice.domain.DigitalSpecimenEvent;
+import eu.dissco.virtualcollectionservice.domain.DigitalSpecimenWrapper;
 import eu.dissco.virtualcollectionservice.domain.VirtualCollectionAction;
 import eu.dissco.virtualcollectionservice.domain.VirtualCollectionEvent;
+import eu.dissco.virtualcollectionservice.schema.Agent;
+import eu.dissco.virtualcollectionservice.schema.Agent.Type;
+import eu.dissco.virtualcollectionservice.schema.DigitalSpecimen;
+import eu.dissco.virtualcollectionservice.schema.EntityRelationship;
+import eu.dissco.virtualcollectionservice.schema.Identifier;
+import eu.dissco.virtualcollectionservice.schema.Identifier.DctermsType;
+import eu.dissco.virtualcollectionservice.schema.Identifier.OdsGupriLevel;
+import eu.dissco.virtualcollectionservice.schema.Identifier.OdsIdentifierStatus;
+import eu.dissco.virtualcollectionservice.schema.OdsHasRole;
 import eu.dissco.virtualcollectionservice.schema.TargetDigitalObjectFilter;
 import eu.dissco.virtualcollectionservice.schema.TargetDigitalObjectFilter.OdsPredicateType;
 import eu.dissco.virtualcollectionservice.schema.VirtualCollection;
 import eu.dissco.virtualcollectionservice.schema.VirtualCollection.LtcBasisOfScheme;
 import eu.dissco.virtualcollectionservice.schema.VirtualCollection.OdsStatus;
+import java.net.URI;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 
 public class TestUtils {
 
   public static final ObjectMapper MAPPER = new ObjectMapper().findAndRegisterModules();
-  private static final String VC_ID = "https://hdl.handle.net/TEST/XXX-XXX-XXX";
   public static final String SPECIMEN_ID = "https://doi.org/TEST/ZZZ-X4T-YYV";
+  public static final String APP_ID = "https://doi.org/10.5281/zenodo.17182153";
+  public static final String APP_NAME = "DiSSCo Virtual Collection Service";
+  public static final Instant CREATED = Instant.parse("2025-09-23T12:05:24.000Z");
+  private static final String VC_ID = "https://hdl.handle.net/TEST/XXX-XXX-XXX";
 
   public static VirtualCollectionEvent givenVirtualCollectionEvent() {
     return new VirtualCollectionEvent(
@@ -50,6 +69,59 @@ public class TestUtils {
         t -> t.field("@id.keyword")
             .value(FieldValue.of(SPECIMEN_ID))
             .caseInsensitive(true)).build())).build();
+  }
+
+  public static DigitalSpecimenEvent givenDigitalSpecimenEventWithVC()
+      throws JsonProcessingException {
+    return new DigitalSpecimenEvent(
+        Collections.emptySet(),
+        new DigitalSpecimenWrapper(
+            "https://herbarium.bgbm.org/object/B100039428",
+            "https://doi.org/21.T11148/894b1e6cad57e921764e",
+            givenDigitalSpecimenWithVC(),
+            MAPPER.createObjectNode()
+        ),
+        Collections.emptyList(),
+        false,
+        false
+    );
+  }
+
+  public static DigitalSpecimen givenDigitalSpecimenWithVC() throws JsonProcessingException {
+    var digitalSpecimen = MAPPER.convertValue(givenDigitalSpecimen(), DigitalSpecimen.class);
+    digitalSpecimen.getOdsHasEntityRelationships().add(
+        new EntityRelationship()
+            .withType("ods:EntityRelationship")
+            .withDwcRelationshipOfResource("hasVirtualCollection")
+            .withOdsRelatedResourceURI(URI.create(VC_ID))
+            .withDwcRelatedResourceID(VC_ID)
+            .withDwcRelationshipEstablishedDate(Date.from(CREATED))
+            .withOdsHasAgents(List.of(new Agent()
+                .withId(APP_ID)
+                .withType(Type.SCHEMA_SOFTWARE_APPLICATION)
+                .withSchemaName(APP_NAME)
+                .withOdsHasRoles(
+                    List.of(new OdsHasRole()
+                        .withType("schema:Role")
+                        .withSchemaRoleName("virtual-collection-manager")
+                    )
+                )
+                .withOdsHasIdentifiers(List.of(new Identifier()
+                    .withId(APP_ID)
+                    .withType("ods:Identifier")
+                    .withDctermsTitle("DOI")
+                    .withDctermsType(DctermsType.DOI)
+                    .withDctermsIdentifier(APP_ID)
+                    .withOdsIsPartOfLabel(Boolean.FALSE)
+                    .withOdsGupriLevel(
+                        OdsGupriLevel.GLOBALLY_UNIQUE_STABLE_PERSISTENT_RESOLVABLE_FDO_COMPLIANT)
+                    .withOdsIdentifierStatus(OdsIdentifierStatus.PREFERRED)))))
+    );
+    return digitalSpecimen;
+  }
+
+  public static DigitalSpecimen givenDigitalSpecimen() throws JsonProcessingException {
+    return MAPPER.convertValue(givenSpecimenNode(), DigitalSpecimen.class);
   }
 
   public static JsonNode givenSpecimenNode() throws JsonProcessingException {
