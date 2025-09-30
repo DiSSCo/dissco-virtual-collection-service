@@ -15,23 +15,29 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class RabbitMqConsumerServiceTest {
 
   @Mock
-  private ProcessingService processingService;
+  private VirtualCollectionProcessingService processingService;
+  @Mock
+  private DigitalSpecimenProcessingService digitalSpecimenProcessingService;
+  @Mock
+  private RabbitMqPublisherService publisherService;
   private RabbitMqConsumerService consumerService;
 
   @BeforeEach
   void setup() {
-    consumerService = new RabbitMqConsumerService(MAPPER, processingService);
+    consumerService = new RabbitMqConsumerService(MAPPER, processingService,
+        digitalSpecimenProcessingService, publisherService);
   }
 
   @Test
   void testGetMessages() throws IOException {
     // Given
-    var message = MAPPER.writeValueAsString(givenVirtualCollectionEvent());
+    var event = givenVirtualCollectionEvent();
+    var message = MAPPER.writeValueAsString(event);
 
     // When
     consumerService.getMessages(message);
 
     // Then
-    then(processingService).should().handleMessage(givenVirtualCollectionEvent());
+    then(processingService).should().handleMessage(event);
   }
 }

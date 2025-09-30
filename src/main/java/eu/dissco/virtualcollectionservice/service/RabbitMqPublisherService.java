@@ -27,4 +27,9 @@ public class RabbitMqPublisherService {
         objectMapper.writeValueAsString(digitalSpecimenEvent));
   }
 
+  public void sendMessageDLQ(Object message) {
+    rabbitTemplate.convertAndSend(rabbitProperties.getIngestionDlqExchangeName(),
+        rabbitProperties.getIngestionDlqKeyName(), message);
+  }
+
 }

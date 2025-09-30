@@ -17,6 +17,7 @@ import eu.dissco.virtualcollectionservice.schema.Identifier;
 import eu.dissco.virtualcollectionservice.schema.Identifier.DctermsType;
 import eu.dissco.virtualcollectionservice.schema.Identifier.OdsGupriLevel;
 import eu.dissco.virtualcollectionservice.schema.Identifier.OdsIdentifierStatus;
+import eu.dissco.virtualcollectionservice.schema.OdsHasPredicate;
 import eu.dissco.virtualcollectionservice.schema.OdsHasRole;
 import eu.dissco.virtualcollectionservice.schema.TargetDigitalObjectFilter;
 import eu.dissco.virtualcollectionservice.schema.TargetDigitalObjectFilter.OdsPredicateType;
@@ -28,6 +29,8 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Stream;
+import org.junit.jupiter.params.provider.Arguments;
 
 public class TestUtils {
 
@@ -46,22 +49,110 @@ public class TestUtils {
   }
 
   public static VirtualCollection givenVirtualCollection() {
+    return givenVirtualCollection(VC_ID, "A test collection");
+  }
+
+  public static VirtualCollection givenVirtualCollection(String id, String name) {
     return new VirtualCollection()
-        .withId(VC_ID)
-        .withDctermsIdentifier(VC_ID)
+        .withId(id)
+        .withDctermsIdentifier(id)
         .withType("VirtualCollection")
-        .withLtcCollectionName("A test collection")
+        .withLtcCollectionName(name)
         .withLtcBasisOfScheme(LtcBasisOfScheme.REFERENCE_COLLECTION)
         .withOdsStatus(OdsStatus.ACTIVE)
         .withSchemaVersion(1)
+        .withSchemaDateCreated(Date.from(Instant.now()))
+        .withSchemaDateModified(Date.from(Instant.now()))
+        .withSchemaCreator(new Agent().withId("https://orcid.org/0000-0002-5669-2769"))
         .withOdsHasTargetDigitalObjectFilter(givenTargetDigitalObjectFilter());
   }
 
-  private static TargetDigitalObjectFilter givenTargetDigitalObjectFilter() {
+  public static TargetDigitalObjectFilter givenTargetDigitalObjectFilter() {
     return new TargetDigitalObjectFilter()
         .withOdsPredicateType(OdsPredicateType.EQUALS)
-        .withOdsPredicateKey("dcterms:identifier")
-        .withOdsPredicateValue("urn:catalog:12345");
+        .withOdsPredicateKey("$['dcterms:identifier']")
+        .withOdsPredicateValue("https://doi.org/TEST/ZZZ-X4T-YYV");
+  }
+
+  public static TargetDigitalObjectFilter givenNotFilter() {
+    return new TargetDigitalObjectFilter()
+        .withOdsPredicateType(OdsPredicateType.NOT)
+        .withOdsPredicateKey("$['ods:physicalSpecimenIDType']")
+        .withOdsPredicateValue("Local");
+  }
+
+  public static TargetDigitalObjectFilter givenInFilter() {
+    return new TargetDigitalObjectFilter()
+        .withOdsPredicateType(OdsPredicateType.IN)
+        .withOdsPredicateKey("$['ods:topicDiscipline']")
+        .withOdsPredicateValues(List.of("Botany", "Zoology"));
+  }
+
+  public static TargetDigitalObjectFilter givenOrFilter() {
+    return new TargetDigitalObjectFilter()
+        .withOdsPredicateType(OdsPredicateType.OR)
+        .withOdsHasPredicates(List.of(
+            new OdsHasPredicate()
+                .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.EQUALS)
+                .withOdsPredicateKey("$['ods:topicDiscipline']")
+                .withOdsPredicateValue("Botany"),
+            new OdsHasPredicate()
+                .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.EQUALS)
+                .withOdsPredicateKey("$['ods:version']")
+                .withOdsPredicateValue(2)
+        ));
+  }
+
+  public static TargetDigitalObjectFilter givenAndFilter() {
+    return new TargetDigitalObjectFilter()
+        .withOdsPredicateType(OdsPredicateType.AND)
+        .withOdsHasPredicates(List.of(
+            new OdsHasPredicate()
+                .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.EQUALS)
+                .withOdsPredicateKey("$['ods:isKnownToContainMedia']")
+                .withOdsPredicateValue(false),
+            new OdsHasPredicate()
+                .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.EQUALS)
+                .withOdsPredicateKey("$['dwc:preparations']")
+                .withOdsPredicateValue("herbarium sheet")
+        ));
+  }
+
+  public static TargetDigitalObjectFilter givenEqualsListFilter() {
+    return new TargetDigitalObjectFilter()
+        .withOdsPredicateType(OdsPredicateType.EQUALS)
+        .withOdsPredicateKey("$['ods:topicDiscipline']")
+        .withOdsPredicateValues(List.of("Botany", "Zoology"));
+  }
+
+  public static Stream<Arguments> illegalFilters() {
+    return Stream.of(
+        Arguments.of(new TargetDigitalObjectFilter()
+            .withOdsPredicateType(OdsPredicateType.AND)
+            .withOdsPredicateKey("@id")
+            .withOdsPredicateValue("http://example.com/specimen/12345")),
+        Arguments.of(new TargetDigitalObjectFilter()
+            .withOdsPredicateType(OdsPredicateType.NOT)
+            .withOdsPredicateKey("ods:topicDiscipline")
+            .withOdsPredicateValues(List.of("botany", "zoology"))),
+        Arguments.of(new TargetDigitalObjectFilter()
+            .withOdsPredicateType(OdsPredicateType.IN)
+            .withOdsPredicateKey("ods:topicDiscipline")
+            .withOdsPredicateValues(List.of("botany"))),
+        Arguments.of(new TargetDigitalObjectFilter()
+            .withOdsPredicateType(OdsPredicateType.IN)
+            .withOdsPredicateKey("ods:topicDiscipline")
+            .withOdsPredicateValues(null)),
+        Arguments.of(new TargetDigitalObjectFilter()
+            .withOdsPredicateType(OdsPredicateType.EQUALS)
+            .withOdsHasPredicates(List.of(
+                new OdsHasPredicate()
+                    .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.EQUALS)
+                    .withOdsPredicateKey("ods:topicDiscipline")
+                    .withOdsPredicateValues(List.of("botany", "zoology"))
+            ))
+        )
+    );
   }
 
   public static Query givenElasticQuery() {
@@ -84,6 +175,22 @@ public class TestUtils {
         Collections.emptyList(),
         false,
         false
+    );
+  }
+
+  public static DigitalSpecimenEvent givenDigitalSpecimenEvent()
+      throws JsonProcessingException {
+    return new DigitalSpecimenEvent(
+        Collections.emptySet(),
+        new DigitalSpecimenWrapper(
+            "https://herbarium.bgbm.org/object/B100039428",
+            "https://doi.org/21.T11148/894b1e6cad57e921764e",
+            givenDigitalSpecimen(),
+            MAPPER.createObjectNode()
+        ),
+        Collections.emptyList(),
+        false,
+        true
     );
   }
 

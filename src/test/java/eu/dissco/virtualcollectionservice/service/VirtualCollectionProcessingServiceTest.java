@@ -28,7 +28,7 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class ProcessingServiceTest {
+class VirtualCollectionProcessingServiceTest {
 
   private static MockedStatic<Instant> mockedInstant;
   private static MockedStatic<Clock> mockedClock;
@@ -38,7 +38,7 @@ class ProcessingServiceTest {
   @Mock
   private RabbitMqPublisherService publisherService;
 
-  private ProcessingService service;
+  private VirtualCollectionProcessingService service;
 
   private static void tearDownClock() {
     mockedInstant.close();
@@ -58,7 +58,7 @@ class ProcessingServiceTest {
 
   @BeforeEach
   void setup() {
-    service = new ProcessingService(MAPPER, repository, publisherService,
+    service = new VirtualCollectionProcessingService(MAPPER, repository, publisherService,
         new ApplicationProperties());
   }
 
