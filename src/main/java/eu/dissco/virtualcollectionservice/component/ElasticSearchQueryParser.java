@@ -92,7 +92,8 @@ public class ElasticSearchQueryParser {
    * elements of a single type, and that the first element is representative of the entire list.
    */
   private static String sanitizeKey(String predicateKey, List<Object> predicateValue) {
-    var sanitizedKey = predicateKey.replace("'", "")
+    var sanitizedKey = predicateKey
+        .replace("'", "")
         .replace("[*]", "")
         .replace("$", "")
         .replace("[", "")

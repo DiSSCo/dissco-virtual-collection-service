@@ -5,7 +5,7 @@ import eu.dissco.virtualcollectionservice.schema.VirtualCollection;
 import jakarta.annotation.PostConstruct;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import lombok.Getter;
+import lombok.Locked;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -17,16 +17,23 @@ import org.springframework.stereotype.Component;
 public class VirtualCollectionCacheComponent {
 
   private final VirtualCollectionRepository repository;
-  @Getter
+
   private Set<VirtualCollection> cache;
 
+  @Locked.Write
   @PostConstruct
   public void fillCache() {
     cache = repository.getAllVirtualCollections();
     log.info("Virtual Collection Cache Initialized, total Virtual Collections: {}", cache.size());
   }
 
-  @Scheduled(fixedDelay = 30, timeUnit = TimeUnit.SECONDS) // Refresh every hour
+  @Locked.Read
+  public Set<VirtualCollection> getCache() {
+    return Set.copyOf(cache);
+  }
+
+  @Locked.Write
+  @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.HOURS)
   public void refreshCache() {
     log.info("Refreshing Virtual Collection Cache");
     cache.clear();

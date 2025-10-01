@@ -129,26 +129,26 @@ public class TestUtils {
     return Stream.of(
         Arguments.of(new TargetDigitalObjectFilter()
             .withOdsPredicateType(OdsPredicateType.AND)
-            .withOdsPredicateKey("@id")
+            .withOdsPredicateKey("$['@id']")
             .withOdsPredicateValue("http://example.com/specimen/12345")),
         Arguments.of(new TargetDigitalObjectFilter()
             .withOdsPredicateType(OdsPredicateType.NOT)
-            .withOdsPredicateKey("ods:topicDiscipline")
+            .withOdsPredicateKey("$['ods:topicDiscipline']")
             .withOdsPredicateValues(List.of("botany", "zoology"))),
         Arguments.of(new TargetDigitalObjectFilter()
             .withOdsPredicateType(OdsPredicateType.IN)
-            .withOdsPredicateKey("ods:topicDiscipline")
+            .withOdsPredicateKey("$['ods:topicDiscipline']")
             .withOdsPredicateValues(List.of("botany"))),
         Arguments.of(new TargetDigitalObjectFilter()
             .withOdsPredicateType(OdsPredicateType.IN)
-            .withOdsPredicateKey("ods:topicDiscipline")
+            .withOdsPredicateKey("$['ods:topicDiscipline']")
             .withOdsPredicateValues(null)),
         Arguments.of(new TargetDigitalObjectFilter()
             .withOdsPredicateType(OdsPredicateType.EQUALS)
             .withOdsHasPredicates(List.of(
                 new OdsHasPredicate()
                     .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.EQUALS)
-                    .withOdsPredicateKey("ods:topicDiscipline")
+                    .withOdsPredicateKey("$['ods:topicDiscipline']")
                     .withOdsPredicateValues(List.of("botany", "zoology"))
             ))
         )
