@@ -1,13 +1,17 @@
 package eu.dissco.virtualcollectionservice.component;
 
 import static eu.dissco.virtualcollectionservice.utils.TestUtils.SPECIMEN_ID;
+import static eu.dissco.virtualcollectionservice.utils.TestUtils.givenAndFilter;
 import static eu.dissco.virtualcollectionservice.utils.TestUtils.givenElasticQuery;
+import static eu.dissco.virtualcollectionservice.utils.TestUtils.givenEqualsListFilter;
+import static eu.dissco.virtualcollectionservice.utils.TestUtils.givenInFilter;
+import static eu.dissco.virtualcollectionservice.utils.TestUtils.givenNotFilter;
+import static eu.dissco.virtualcollectionservice.utils.TestUtils.givenOrFilter;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertThrows;
 
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import eu.dissco.virtualcollectionservice.schema.OdsHasPredicate;
 import eu.dissco.virtualcollectionservice.schema.TargetDigitalObjectFilter;
 import eu.dissco.virtualcollectionservice.schema.TargetDigitalObjectFilter.OdsPredicateType;
 import java.util.List;
@@ -24,104 +28,43 @@ class ElasticSearchQueryParserTest {
   static Stream<Arguments> parseQueryProvider() {
     return Stream.of(
         Arguments.of(new TargetDigitalObjectFilter()
-                .withOdsPredicateType(OdsPredicateType.EQUALS)
-                .withOdsPredicateKey("@id")
-                .withOdsPredicateValue(SPECIMEN_ID), givenElasticQuery()),
-        Arguments.of(new TargetDigitalObjectFilter()
-                .withOdsPredicateType(OdsPredicateType.NOT)
-                .withOdsPredicateKey("schema:version")
-                .withOdsPredicateValue(1),
+            .withOdsPredicateType(OdsPredicateType.EQUALS)
+            .withOdsPredicateKey("@id")
+            .withOdsPredicateValue(SPECIMEN_ID), givenElasticQuery()),
+        Arguments.of(givenNotFilter(),
             new Query.Builder().bool(b -> b.mustNot(new Query.Builder().term(
-                t -> t.field("schema:version").value(FieldValue.of(1))
+                t -> t.field("ods:physicalSpecimenIDType.keyword").value(FieldValue.of("Local"))
                     .caseInsensitive(true)).build())).build()),
-        Arguments.of(new TargetDigitalObjectFilter()
-                .withOdsPredicateType(OdsPredicateType.IN)
-                .withOdsPredicateKey("ods:topicDiscipline")
-                .withOdsPredicateValues(List.of("botany", "zoology")),
+        Arguments.of(givenInFilter(),
             new Query.Builder().terms(
                     t -> t.field("ods:topicDiscipline.keyword")
                         .terms(
-                            ts -> ts.value(List.of(FieldValue.of("botany"), FieldValue.of("zoology")))))
+                            ts -> ts.value(List.of(FieldValue.of("Botany"), FieldValue.of("Zoology")))))
                 .build()),
-        Arguments.of(new TargetDigitalObjectFilter()
-                .withOdsPredicateType(OdsPredicateType.EQUALS)
-                .withOdsPredicateKey("ods:topicDiscipline")
-                .withOdsPredicateValues(List.of("botany", "zoology")),
+        Arguments.of(givenEqualsListFilter(),
             new Query.Builder().terms(
                     t -> t.field("ods:topicDiscipline.keyword")
                         .terms(
-                            ts -> ts.value(List.of(FieldValue.of("botany"), FieldValue.of("zoology")))))
+                            ts -> ts.value(List.of(FieldValue.of("Botany"), FieldValue.of("Zoology")))))
                 .build()),
-        Arguments.of(new TargetDigitalObjectFilter()
-                .withOdsPredicateType(OdsPredicateType.AND)
-                .withOdsHasPredicates(List.of(
-                    new OdsHasPredicate()
-                        .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.EQUALS)
-                        .withOdsPredicateKey("ods:topicDiscipline")
-                        .withOdsPredicateValue("botany"),
-                    new OdsHasPredicate()
-                        .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.EQUALS)
-                        .withOdsPredicateKey("schema:version")
-                        .withOdsPredicateValue(2)
-                )),
+        Arguments.of(givenAndFilter(),
             new Query.Builder().bool(b -> b.must(List.of(new Query.Builder().bool(
-                    b2 -> b2.must(m -> m.term(t -> t.field("ods:topicDiscipline.keyword")
-                        .value(FieldValue.of("botany"))
+                    b2 -> b2.must(m -> m.term(t -> t.field("ods:isKnownToContainMedia")
+                        .value(FieldValue.of(false))
                         .caseInsensitive(true)))).build(),
                 new Query.Builder().bool(b2 -> b2.must(m -> m.term(
-                    t -> t.field("schema:version")
-                        .value(FieldValue.of(2))
+                    t -> t.field("dwc:preparations.keyword")
+                        .value(FieldValue.of("herbarium sheet"))
                         .caseInsensitive(true)))).build()))).build()),
-        Arguments.of(new TargetDigitalObjectFilter()
-                .withOdsPredicateType(OdsPredicateType.OR)
-                .withOdsHasPredicates(List.of(
-                    new OdsHasPredicate()
-                        .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.EQUALS)
-                        .withOdsPredicateKey("ods:topicDiscipline")
-                        .withOdsPredicateValue("botany"),
-                    new OdsHasPredicate()
-                        .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.EQUALS)
-                        .withOdsPredicateKey("schema:version")
-                        .withOdsPredicateValue(2)
-                )),
+        Arguments.of(givenOrFilter(),
             new Query.Builder().bool(b -> b.should(List.of(new Query.Builder().bool(
                     b2 -> b2.must(m -> m.term(t -> t.field("ods:topicDiscipline.keyword")
-                        .value(FieldValue.of("botany"))
+                        .value(FieldValue.of("Botany"))
                         .caseInsensitive(true)))).build(),
                 new Query.Builder().bool(b2 -> b2.must(m -> m.term(
-                    t -> t.field("schema:version")
+                    t -> t.field("ods:version")
                         .value(FieldValue.of(2))
                         .caseInsensitive(true)))).build())).minimumShouldMatch("1")).build()));
-  }
-
-  static Stream<Arguments> parseIllegalQueryProvider() {
-    return Stream.of(
-        Arguments.of(new TargetDigitalObjectFilter()
-            .withOdsPredicateType(OdsPredicateType.AND)
-            .withOdsPredicateKey("@id")
-            .withOdsPredicateValue("http://example.com/specimen/12345")),
-        Arguments.of(new TargetDigitalObjectFilter()
-            .withOdsPredicateType(OdsPredicateType.NOT)
-            .withOdsPredicateKey("ods:topicDiscipline")
-            .withOdsPredicateValues(List.of("botany", "zoology"))),
-        Arguments.of(new TargetDigitalObjectFilter()
-            .withOdsPredicateType(OdsPredicateType.IN)
-            .withOdsPredicateKey("ods:topicDiscipline")
-            .withOdsPredicateValues(List.of("botany"))),
-        Arguments.of(new TargetDigitalObjectFilter()
-            .withOdsPredicateType(OdsPredicateType.IN)
-            .withOdsPredicateKey("ods:topicDiscipline")
-            .withOdsPredicateValues(null)),
-        Arguments.of(new TargetDigitalObjectFilter()
-            .withOdsPredicateType(OdsPredicateType.EQUALS)
-            .withOdsHasPredicates(List.of(
-                new OdsHasPredicate()
-                    .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.EQUALS)
-                    .withOdsPredicateKey("ods:topicDiscipline")
-                    .withOdsPredicateValues(List.of("botany", "zoology"))
-            ))
-        )
-    );
   }
 
   @ParameterizedTest
@@ -137,7 +80,7 @@ class ElasticSearchQueryParserTest {
   }
 
   @ParameterizedTest
-  @MethodSource("parseIllegalQueryProvider")
+  @MethodSource("eu.dissco.virtualcollectionservice.utils.TestUtils#illegalFilters")
   void testInvalidParseQuery(TargetDigitalObjectFilter objectFilter) {
     // Given
 

@@ -1,5 +1,7 @@
 package eu.dissco.virtualcollectionservice.component;
 
+import static eu.dissco.virtualcollectionservice.utils.FilterParseUtils.harmonizeValues;
+
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import eu.dissco.virtualcollectionservice.schema.TargetDigitalObjectFilter;
@@ -59,34 +61,22 @@ public class ElasticSearchQueryParser {
     }
   }
 
-  private static List<Object> harmonizeValues(Object odsPredicateValue,
-      List<Object> odsPredicateValues) {
-    if (odsPredicateValue != null) {
-      return List.of(odsPredicateValue);
-    } else if (odsPredicateValues != null && !odsPredicateValues.isEmpty()) {
-      return odsPredicateValues;
-    } else {
-      throw new IllegalArgumentException(
-          "Both predicate value and predicate values are null or empty");
-    }
-  }
-
   private static Query getQueryFromPredicate(String predicateType, String predicateKey,
-      List<Object> predicateValue) {
-    var sanitizedKey = sanitizeKey(predicateKey, predicateValue);
-    if (predicateType.equals(OdsPredicateType.NOT.value()) && predicateValue.size() == 1) {
-      var termQuery = getTermQuery(predicateValue, sanitizedKey);
+      List<Object> predicateValues) {
+    var sanitizedKey = sanitizeKey(predicateKey, predicateValues);
+    if (predicateType.equals(OdsPredicateType.NOT.value()) && predicateValues.size() == 1) {
+      var termQuery = getTermQuery(predicateValues, sanitizedKey);
       return new Query.Builder().bool(b -> b.mustNot(termQuery)).build();
     } else if (predicateType.equals(OdsPredicateType.EQUALS.value())
-        && predicateValue.size() == 1) {
-      var termQuery = getTermQuery(predicateValue, sanitizedKey);
+        && predicateValues.size() == 1) {
+      var termQuery = getTermQuery(predicateValues, sanitizedKey);
       return new Query.Builder().bool(b -> b.must(termQuery)).build();
     } else if (
         (predicateType.equals(OdsPredicateType.IN.value()) || predicateType.equals(
-            OdsPredicateType.EQUALS.value())) && predicateValue.size() > 1) {
+            OdsPredicateType.EQUALS.value())) && predicateValues.size() > 1) {
       return new Query.Builder().terms(t -> t.field(sanitizedKey)
               .terms(ts -> ts.value(
-                  predicateValue.stream().map(value -> FieldValue.of((String) value)).toList())))
+                  predicateValues.stream().map(value -> FieldValue.of((String) value)).toList())))
           .build();
     } else {
       throw new IllegalArgumentException("Invalid predicateType for this level: " + predicateType);
@@ -102,7 +92,8 @@ public class ElasticSearchQueryParser {
    * elements of a single type, and that the first element is representative of the entire list.
    */
   private static String sanitizeKey(String predicateKey, List<Object> predicateValue) {
-    var sanitizedKey = predicateKey.replace("'", "")
+    var sanitizedKey = predicateKey
+        .replace("'", "")
         .replace("[*]", "")
         .replace("$", "")
         .replace("[", "")
