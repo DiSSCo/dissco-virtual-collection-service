@@ -9,6 +9,7 @@ import com.jayway.jsonpath.JsonPath;
 import eu.dissco.virtualcollectionservice.schema.DigitalSpecimen;
 import eu.dissco.virtualcollectionservice.schema.TargetDigitalObjectFilter;
 import eu.dissco.virtualcollectionservice.schema.TargetDigitalObjectFilter.OdsPredicateType;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -73,18 +74,39 @@ public class SpecimenEvaluationComponent {
       String predicateKey, List<Object> predicateValues) {
     if (predicateType.equals(OdsPredicateType.EQUALS.value()) && predicateValues.size() == 1) {
       var result = document.read(predicateKey);
-      return predicateValues.getFirst().equals(result);
+      return matchesPredicate(predicateValues, result);
     } else if (predicateType.equals(OdsPredicateType.NOT.value()) && predicateValues.size() == 1) {
       var result = document.read(predicateKey);
-      return !predicateValues.getFirst().equals(result);
+      return !matchesPredicate(predicateValues, result);
     } else if (
         (predicateType.equals(OdsPredicateType.IN.value()) || predicateType
             .equals(OdsPredicateType.EQUALS.value())) && predicateValues.size() > 1) {
       var result = document.read(predicateKey);
-      return predicateValues.contains(result);
+      return matchPredicateArray(predicateValues, result);
     } else {
       throw new IllegalArgumentException(
           "The predicate type is not supported for local evaluation: " + predicateType);
+    }
+  }
+
+  private static boolean matchPredicateArray(List<Object> predicateValues, Object result) {
+    if (result instanceof ArrayList<?>){
+      for (Object val : (ArrayList<?>) result) {
+        if (predicateValues.contains(val)) {
+          return true;
+        }
+      }
+      return false;
+    } else {
+      return predicateValues.contains(result);
+    }
+  }
+
+  private static boolean matchesPredicate(List<Object> predicateValues, Object result) {
+    if (result instanceof ArrayList<?>){
+      return ((ArrayList<?>) result).contains(predicateValues.getFirst());
+    } else {
+      return predicateValues.getFirst().equals(result);
     }
   }
 }

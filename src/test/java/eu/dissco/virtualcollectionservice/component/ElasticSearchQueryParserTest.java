@@ -12,6 +12,7 @@ import static org.junit.Assert.assertThrows;
 
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import eu.dissco.virtualcollectionservice.schema.OdsHasPredicate;
 import eu.dissco.virtualcollectionservice.schema.TargetDigitalObjectFilter;
 import eu.dissco.virtualcollectionservice.schema.TargetDigitalObjectFilter.OdsPredicateType;
 import java.util.List;
@@ -29,7 +30,7 @@ class ElasticSearchQueryParserTest {
     return Stream.of(
         Arguments.of(new TargetDigitalObjectFilter()
             .withOdsPredicateType(OdsPredicateType.EQUALS)
-            .withOdsPredicateKey("@id")
+            .withOdsPredicateKey("$['@id']")
             .withOdsPredicateValue(SPECIMEN_ID), givenElasticQuery()),
         Arguments.of(givenNotFilter(),
             new Query.Builder().bool(b -> b.mustNot(new Query.Builder().term(
@@ -64,7 +65,26 @@ class ElasticSearchQueryParserTest {
                 new Query.Builder().bool(b2 -> b2.must(m -> m.term(
                     t -> t.field("ods:version")
                         .value(FieldValue.of(2))
-                        .caseInsensitive(true)))).build())).minimumShouldMatch("1")).build()));
+                        .caseInsensitive(true)))).build())).minimumShouldMatch("1")).build()),
+        Arguments.of(    new TargetDigitalObjectFilter()
+        .withOdsPredicateType(OdsPredicateType.AND)
+        .withOdsHasPredicates(List.of(
+            new OdsHasPredicate()
+                .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.EQUALS)
+                .withOdsPredicateKey("$['ods:hasIdentifications'][*]['ods:hasTaxonIdentifications'][*]['dwc:kingdom']")
+                .withOdsPredicateValue("Plantae"),
+            new OdsHasPredicate()
+                .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.EQUALS)
+                .withOdsPredicateKey("$['ods:hasEvents'][*]['ods:hasLocation']['ods:hasGeoreference']['dwc:decimalLatitude']")
+                .withOdsPredicateValue(-41.0983423)
+        )),             new Query.Builder().bool(b -> b.must(List.of(new Query.Builder().bool(
+                b2 -> b2.must(m -> m.term(t -> t.field("ods:hasIdentifications.ods:hasTaxonIdentifications.dwc:kingdom.keyword")
+                    .value(FieldValue.of("Plantae"))
+                    .caseInsensitive(true)))).build(),
+            new Query.Builder().bool(b2 -> b2.must(m -> m.term(
+                t -> t.field("ods:hasEvents.ods:hasLocation.ods:hasGeoreference.dwc:decimalLatitude")
+                    .value(FieldValue.of(-41.0983423))
+                    .caseInsensitive(true)))).build()))).build()));
   }
 
   @ParameterizedTest

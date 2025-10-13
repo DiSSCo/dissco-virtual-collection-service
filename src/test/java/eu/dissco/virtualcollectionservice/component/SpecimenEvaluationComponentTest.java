@@ -47,9 +47,17 @@ class SpecimenEvaluationComponentTest {
             .withOdsHasPredicates(List.of(
                 new OdsHasPredicate()
                     .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.EQUALS)
-                    .withOdsPredicateKey("$['ods:hasEvents'][0]['ods:hasLocation']['dwc:country']")
-                    .withOdsPredicateValue("Netherlands")
-            )), false));
+                    .withOdsPredicateKey("$['ods:hasEvents'][*]['ods:hasLocation']['dwc:country']")
+                    .withOdsPredicateValue("El Salvador")
+            )), true),
+        Arguments.of(new TargetDigitalObjectFilter()
+            .withOdsPredicateType(OdsPredicateType.OR)
+            .withOdsHasPredicates(List.of(
+                new OdsHasPredicate()
+                    .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.EQUALS)
+                    .withOdsPredicateKey("$['ods:hasIdentifications'][*]['ods:hasTaxonIdentifications'][*]['dwc:kingdom']")
+                    .withOdsPredicateValues(List.of("plantae", "Plantae"))
+            )), true));
   }
 
   @BeforeEach
