@@ -54,10 +54,18 @@ class SpecimenEvaluationComponentTest {
             .withOdsPredicateType(OdsPredicateType.OR)
             .withOdsHasPredicates(List.of(
                 new OdsHasPredicate()
-                    .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.EQUALS)
+                    .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.IN)
                     .withOdsPredicateKey("$['ods:hasIdentifications'][*]['ods:hasTaxonIdentifications'][*]['dwc:kingdom']")
                     .withOdsPredicateValues(List.of("plantae", "Plantae"))
-            )), true));
+            )), true),
+        Arguments.of(new TargetDigitalObjectFilter()
+            .withOdsPredicateType(OdsPredicateType.OR)
+            .withOdsHasPredicates(List.of(
+                new OdsHasPredicate()
+                    .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.IN)
+                    .withOdsPredicateKey("$['ods:hasIdentifications'][*]['ods:hasTaxonIdentifications'][*]['dwc:kingdom']")
+                    .withOdsPredicateValues(List.of("Animalia", "animalia"))
+            )), false));
   }
 
   @BeforeEach
