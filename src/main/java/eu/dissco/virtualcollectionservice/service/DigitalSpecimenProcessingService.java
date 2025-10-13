@@ -32,20 +32,23 @@ public class DigitalSpecimenProcessingService extends AbstractProcessingService 
 
   public void handleIngestionEvents(List<DigitalSpecimenEvent> events)
       throws JsonProcessingException {
+    log.info("Handling {} ingestion events", events.size());
     for (var event : events) {
       for (var virtualCollection : cache.getCache()) {
         var specimen = event.digitalSpecimenWrapper().attributes();
         if (specimenEvaluationComponent.evaluateSpecimen(specimen,
             virtualCollection.getOdsHasTargetDigitalObjectFilter())) {
+          log.info("Adding specimen with id: {} to virtual collection with id: {}",
+              specimen.getOdsNormalisedPhysicalSpecimenID(), virtualCollection.getId());
           addVirtualCollection(specimen, virtualCollection.getId(),
               URI.create(virtualCollection.getId()));
-          try {
-            publisherService.publishDigitalSpecimen(event);
-          } catch (JsonProcessingException e) {
-            log.error(
-                "Manual action needed. Error publishing digital specimen with id: {}, error: {}",
-                event.digitalSpecimenWrapper().attributes().getId(), e.getMessage());
-          }
+        }
+        try {
+          publisherService.publishDigitalSpecimen(event);
+        } catch (JsonProcessingException e) {
+          log.error(
+              "Manual action needed. Error publishing digital specimen with id: {}, error: {}",
+              event.digitalSpecimenWrapper().attributes().getId(), e.getMessage());
         }
       }
     }
