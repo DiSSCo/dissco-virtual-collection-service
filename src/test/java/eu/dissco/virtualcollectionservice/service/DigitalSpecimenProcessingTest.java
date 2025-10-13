@@ -69,7 +69,7 @@ class DigitalSpecimenProcessingTest {
     processingService.handleIngestionEvents(List.of(digitalSpecimen));
 
     // Then
-    then(publisherService).shouldHaveNoInteractions();
+    then(publisherService).should().publishDigitalSpecimen(digitalSpecimen);
   }
 
   @Test

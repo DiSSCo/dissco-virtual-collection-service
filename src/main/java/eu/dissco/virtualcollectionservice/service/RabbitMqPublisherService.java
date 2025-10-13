@@ -20,8 +20,6 @@ public class RabbitMqPublisherService {
 
   public void publishDigitalSpecimen(DigitalSpecimenEvent digitalSpecimenEvent)
       throws JsonProcessingException {
-    log.info("Publishing digital specimen with id: {}",
-        digitalSpecimenEvent.digitalSpecimenWrapper().attributes().getId());
     rabbitTemplate.convertAndSend(rabbitProperties.getExchangeName(),
         rabbitProperties.getRoutingKeyName(),
         objectMapper.writeValueAsString(digitalSpecimenEvent));
