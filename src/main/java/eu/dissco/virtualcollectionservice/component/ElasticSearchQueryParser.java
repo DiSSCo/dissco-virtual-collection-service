@@ -97,12 +97,12 @@ public class ElasticSearchQueryParser {
         .replace("[*]", "")
         .replace("$", "")
         .replace("[", "")
-        .replace("]", "")
+        .replace("]", ".")
         .replace("\"", "");
     if (predicateValue.getFirst() instanceof String) {
-      return sanitizedKey + ".keyword";
+      return sanitizedKey + "keyword";
     } else {
-      return sanitizedKey;
+      return sanitizedKey.substring(0, sanitizedKey.length() - 1);
     }
   }
 }
