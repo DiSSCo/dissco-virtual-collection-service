@@ -72,15 +72,15 @@ public class VirtualCollectionProcessingService extends AbstractProcessingServic
       VirtualCollectionEvent virtualCollectionEvent) {
     log.info("Processing {} results", searchResult.size());
     var virtualCollectionId = virtualCollectionEvent.virtualCollection().getId();
-    var virtualCollectionURI = URI.create(virtualCollectionId);
+    var virtualCollectionUri = URI.create(virtualCollectionId);
     searchResult.stream().map(json -> objectMapper.convertValue(json, DigitalSpecimen.class))
         .forEach(digitalSpecimen -> {
           log.info("Processing digital specimen with id: {}", digitalSpecimen.getId());
           try {
             if (VirtualCollectionAction.CREATE.equals(virtualCollectionEvent.action())) {
-              addVirtualCollection(digitalSpecimen, virtualCollectionId, virtualCollectionURI);
+              addVirtualCollection(digitalSpecimen, virtualCollectionId, virtualCollectionUri);
             } else {
-              removeVirtualCollection(digitalSpecimen, virtualCollectionId, virtualCollectionURI);
+              removeVirtualCollection(digitalSpecimen, virtualCollectionId, virtualCollectionUri);
             }
             var digitalSpecimenEvent = wrapIntoEvent(digitalSpecimen);
             rabbitMqPublisherService.publishDigitalSpecimen(digitalSpecimenEvent);
