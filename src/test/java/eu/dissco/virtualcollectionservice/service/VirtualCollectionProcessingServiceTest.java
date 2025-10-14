@@ -1,7 +1,9 @@
 package eu.dissco.virtualcollectionservice.service;
 
+import static eu.dissco.virtualcollectionservice.domain.VirtualCollectionAction.DELETE;
 import static eu.dissco.virtualcollectionservice.utils.TestUtils.CREATED;
 import static eu.dissco.virtualcollectionservice.utils.TestUtils.MAPPER;
+import static eu.dissco.virtualcollectionservice.utils.TestUtils.givenDigitalSpecimenEvent;
 import static eu.dissco.virtualcollectionservice.utils.TestUtils.givenDigitalSpecimenEventWithVC;
 import static eu.dissco.virtualcollectionservice.utils.TestUtils.givenDigitalSpecimenWithVC;
 import static eu.dissco.virtualcollectionservice.utils.TestUtils.givenSpecimenNode;
@@ -75,6 +77,23 @@ class VirtualCollectionProcessingServiceTest {
 
     // Then
     then(publisherService).should().publishDigitalSpecimen(givenDigitalSpecimenEventWithVC());
+    tearDownClock();
+  }
+
+  @Test
+  void testRemoveVirtualCollectionHandleMessage() throws IOException {
+    // Given
+    setUpInstantNow();
+    var event = givenVirtualCollectionEvent(DELETE);
+    var givenSpecimen = givenDigitalSpecimenWithVC();
+    given(repository.retrieveObjects(any(), eq("digital-specimen"), any(Query.class))).willReturn(
+        List.of(MAPPER.valueToTree(givenSpecimen))).willReturn(List.of());
+
+    // When
+    service.handleMessage(event);
+
+    // Then
+    then(publisherService).should().publishDigitalSpecimen(givenDigitalSpecimenEvent(false));
     tearDownClock();
   }
 

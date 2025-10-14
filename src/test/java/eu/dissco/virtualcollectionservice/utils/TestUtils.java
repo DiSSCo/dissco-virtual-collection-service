@@ -42,8 +42,12 @@ public class TestUtils {
   private static final String VC_ID = "https://hdl.handle.net/TEST/XXX-XXX-XXX";
 
   public static VirtualCollectionEvent givenVirtualCollectionEvent() {
+    return givenVirtualCollectionEvent(VirtualCollectionAction.CREATE);
+  }
+
+  public static VirtualCollectionEvent givenVirtualCollectionEvent(VirtualCollectionAction action) {
     return new VirtualCollectionEvent(
-        VirtualCollectionAction.CREATE,
+        action,
         givenVirtualCollection()
     );
   }
@@ -180,6 +184,11 @@ public class TestUtils {
 
   public static DigitalSpecimenEvent givenDigitalSpecimenEvent()
       throws JsonProcessingException {
+    return givenDigitalSpecimenEvent(true);
+  }
+
+  public static DigitalSpecimenEvent givenDigitalSpecimenEvent(boolean isDataFromSourceSystem)
+      throws JsonProcessingException {
     return new DigitalSpecimenEvent(
         Collections.emptySet(),
         new DigitalSpecimenWrapper(
@@ -190,7 +199,7 @@ public class TestUtils {
         ),
         Collections.emptyList(),
         false,
-        true
+        isDataFromSourceSystem
     );
   }
 
