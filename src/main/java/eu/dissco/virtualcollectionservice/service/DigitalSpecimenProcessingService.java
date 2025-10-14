@@ -43,13 +43,13 @@ public class DigitalSpecimenProcessingService extends AbstractProcessingService 
           addVirtualCollection(specimen, virtualCollection.getId(),
               URI.create(virtualCollection.getId()));
         }
-        try {
-          publisherService.publishDigitalSpecimen(event);
-        } catch (JsonProcessingException e) {
-          log.error(
-              "Manual action needed. Error publishing digital specimen with id: {}, error: {}",
-              event.digitalSpecimenWrapper().attributes().getId(), e.getMessage());
-        }
+      }
+      try {
+        publisherService.publishDigitalSpecimen(event);
+      } catch (JsonProcessingException e) {
+        log.error(
+            "Manual action needed. Error publishing digital specimen with id: {}, error: {}",
+            event.digitalSpecimenWrapper().attributes().getId(), e.getMessage());
       }
     }
   }

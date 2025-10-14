@@ -42,8 +42,12 @@ public class TestUtils {
   private static final String VC_ID = "https://hdl.handle.net/TEST/XXX-XXX-XXX";
 
   public static VirtualCollectionEvent givenVirtualCollectionEvent() {
+    return givenVirtualCollectionEvent(VirtualCollectionAction.CREATE);
+  }
+
+  public static VirtualCollectionEvent givenVirtualCollectionEvent(VirtualCollectionAction action) {
     return new VirtualCollectionEvent(
-        VirtualCollectionAction.CREATE,
+        action,
         givenVirtualCollection()
     );
   }
@@ -53,6 +57,11 @@ public class TestUtils {
   }
 
   public static VirtualCollection givenVirtualCollection(String id, String name) {
+    return givenVirtualCollection(id, name, givenTargetDigitalObjectFilter());
+  }
+
+  public static VirtualCollection givenVirtualCollection(String id, String name,
+      TargetDigitalObjectFilter targetDigitalObjectFilter) {
     return new VirtualCollection()
         .withId(id)
         .withDctermsIdentifier(id)
@@ -64,7 +73,7 @@ public class TestUtils {
         .withSchemaDateCreated(Date.from(Instant.now()))
         .withSchemaDateModified(Date.from(Instant.now()))
         .withSchemaCreator(new Agent().withId("https://orcid.org/0000-0002-5669-2769"))
-        .withOdsHasTargetDigitalObjectFilter(givenTargetDigitalObjectFilter());
+        .withOdsHasTargetDigitalObjectFilter(targetDigitalObjectFilter);
   }
 
   public static TargetDigitalObjectFilter givenTargetDigitalObjectFilter() {
@@ -164,6 +173,11 @@ public class TestUtils {
 
   public static DigitalSpecimenEvent givenDigitalSpecimenEventWithVC()
       throws JsonProcessingException {
+    return givenDigitalSpecimenEventWithVC(false);
+  }
+
+  public static DigitalSpecimenEvent givenDigitalSpecimenEventWithVC(boolean isDataFromSourceSystem)
+      throws JsonProcessingException {
     return new DigitalSpecimenEvent(
         Collections.emptySet(),
         new DigitalSpecimenWrapper(
@@ -174,11 +188,16 @@ public class TestUtils {
         ),
         Collections.emptyList(),
         false,
-        false
+        isDataFromSourceSystem
     );
   }
 
   public static DigitalSpecimenEvent givenDigitalSpecimenEvent()
+      throws JsonProcessingException {
+    return givenDigitalSpecimenEvent(true);
+  }
+
+  public static DigitalSpecimenEvent givenDigitalSpecimenEvent(boolean isDataFromSourceSystem)
       throws JsonProcessingException {
     return new DigitalSpecimenEvent(
         Collections.emptySet(),
@@ -190,7 +209,7 @@ public class TestUtils {
         ),
         Collections.emptyList(),
         false,
-        true
+        isDataFromSourceSystem
     );
   }
 
