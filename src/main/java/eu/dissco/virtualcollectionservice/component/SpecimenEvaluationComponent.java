@@ -25,7 +25,9 @@ public class SpecimenEvaluationComponent {
 
   private final ObjectMapper objectMapper;
   private final ParseContext jsonPath = JsonPath.using(
-      Configuration.defaultConfiguration().addOptions(Option.SUPPRESS_EXCEPTIONS));
+      Configuration.defaultConfiguration()
+          .addOptions(Option.ALWAYS_RETURN_LIST)
+          .addOptions(Option.SUPPRESS_EXCEPTIONS));
 
   public boolean evaluateSpecimen(DigitalSpecimen specimen,
       TargetDigitalObjectFilter filter) throws JsonProcessingException {
@@ -78,16 +80,16 @@ public class SpecimenEvaluationComponent {
   private boolean checkPredicate(DocumentContext document, String predicateType,
       String predicateKey, List<Object> predicateValues) {
     if (predicateType.equals(OdsPredicateType.EQUALS.value()) && predicateValues.size() == 1) {
-      var result = document.read(predicateKey);
+      var result = document.read(predicateKey, ArrayList.class);
       return matchesPredicate(predicateValues, result);
     } else if (predicateType.equals(OdsPredicateType.NOT.value())
         && predicateValues.size() == 1) {
-      var result = document.read(predicateKey);
+      var result = document.read(predicateKey, ArrayList.class);
       return !matchesPredicate(predicateValues, result);
     } else if (
         (predicateType.equals(OdsPredicateType.IN.value()) || predicateType
             .equals(OdsPredicateType.EQUALS.value())) && predicateValues.size() > 1) {
-      var result = document.read(predicateKey);
+      var result = document.read(predicateKey, ArrayList.class);
       return matchPredicateArray(predicateValues, result);
     } else {
       throw new IllegalArgumentException(
@@ -95,30 +97,16 @@ public class SpecimenEvaluationComponent {
     }
   }
 
-  private static boolean matchPredicateArray(List<Object> predicateValues, Object result) {
-    if (predicateValues == null || predicateValues.isEmpty()) {
-      return false;
-    }
-    if (result instanceof ArrayList<?>) {
-      for (Object val : (ArrayList<?>) result) {
-        if (predicateValues.contains(val)) {
-          return true;
-        }
+  private static boolean matchPredicateArray(List<Object> predicateValues, ArrayList<?> result) {
+    for (var val : result) {
+      if (predicateValues.contains(val)) {
+        return true;
       }
-      return false;
-    } else {
-      return predicateValues.contains(result);
     }
+    return false;
   }
 
-  private static boolean matchesPredicate(List<Object> predicateValues, Object result) {
-    if (predicateValues == null || predicateValues.isEmpty()) {
-      return false;
-    }
-    if (result instanceof ArrayList<?>) {
-      return ((ArrayList<?>) result).contains(predicateValues.getFirst());
-    } else {
-      return predicateValues.getFirst().equals(result);
-    }
+  private static boolean matchesPredicate(List<Object> predicateValues, ArrayList<?> result) {
+    return result.contains(predicateValues.getFirst());
   }
 }
