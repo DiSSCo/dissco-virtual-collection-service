@@ -12,12 +12,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertThrows;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import eu.dissco.virtualcollectionservice.schema.DigitalSpecimen;
 import eu.dissco.virtualcollectionservice.schema.OdsHasPredicate;
 import eu.dissco.virtualcollectionservice.schema.TargetDigitalObjectFilter;
 import eu.dissco.virtualcollectionservice.schema.TargetDigitalObjectFilter.OdsPredicateType;
 import java.util.List;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -85,6 +87,26 @@ class SpecimenEvaluationComponentTest {
 
     // Then
     assertThat(result).isEqualTo(expected);
+  }
+
+  @Test
+  void testEvaluateEmptySpecimen()
+      throws JsonProcessingException {
+    // Given
+    var filter = new TargetDigitalObjectFilter()
+        .withOdsPredicateType(OdsPredicateType.OR)
+        .withOdsHasPredicates(List.of(
+            new OdsHasPredicate()
+                .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.IN)
+                .withOdsPredicateKey("$['ods:hasIdentifications'][*]['ods:hasTaxonIdentifications'][*]['dwc:kingdom']")
+                .withOdsPredicateValues(List.of("Animalia", "animalia"))));
+    var specimen = new DigitalSpecimen();
+
+    // When
+    var result = component.evaluateSpecimen(specimen, filter);
+
+    // Then
+    assertThat(result).isEqualTo(false);
   }
 
   @ParameterizedTest

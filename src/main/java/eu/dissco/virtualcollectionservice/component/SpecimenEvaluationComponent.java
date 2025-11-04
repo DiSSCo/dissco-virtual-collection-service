@@ -4,8 +4,11 @@ import static eu.dissco.virtualcollectionservice.utils.FilterParseUtils.harmoniz
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.Option;
+import com.jayway.jsonpath.ParseContext;
 import eu.dissco.virtualcollectionservice.schema.DigitalSpecimen;
 import eu.dissco.virtualcollectionservice.schema.TargetDigitalObjectFilter;
 import eu.dissco.virtualcollectionservice.schema.TargetDigitalObjectFilter.OdsPredicateType;
@@ -21,6 +24,8 @@ import org.springframework.stereotype.Component;
 public class SpecimenEvaluationComponent {
 
   private final ObjectMapper objectMapper;
+  private final ParseContext jsonPath = JsonPath.using(
+      Configuration.defaultConfiguration().addOptions(Option.SUPPRESS_EXCEPTIONS));
 
   public boolean evaluateSpecimen(DigitalSpecimen specimen,
       TargetDigitalObjectFilter filter) throws JsonProcessingException {
@@ -38,7 +43,7 @@ public class SpecimenEvaluationComponent {
       TargetDigitalObjectFilter filter)
       throws JsonProcessingException {
     log.debug("Assuming this is a list of predicates: {}", filter);
-    var document = JsonPath.parse(objectMapper.writeValueAsString(specimen));
+    var document = jsonPath.parse(objectMapper.writeValueAsString(specimen));
     for (var predicate : filter.getOdsHasPredicates()) {
       var result = checkPredicate(document, predicate.getOdsPredicateType().value(),
           predicate.getOdsPredicateKey(),
@@ -65,7 +70,7 @@ public class SpecimenEvaluationComponent {
     log.debug("Assuming this is an individual predicate: {}", filter);
     var harmonizedValues = harmonizeValues(filter.getOdsPredicateValue(),
         filter.getOdsPredicateValues());
-    var document = JsonPath.parse(objectMapper.writeValueAsString(specimen));
+    var document = jsonPath.parse(objectMapper.writeValueAsString(specimen));
     return checkPredicate(document, filter.getOdsPredicateType().value(),
         filter.getOdsPredicateKey(), harmonizedValues);
   }
@@ -75,7 +80,8 @@ public class SpecimenEvaluationComponent {
     if (predicateType.equals(OdsPredicateType.EQUALS.value()) && predicateValues.size() == 1) {
       var result = document.read(predicateKey);
       return matchesPredicate(predicateValues, result);
-    } else if (predicateType.equals(OdsPredicateType.NOT.value()) && predicateValues.size() == 1) {
+    } else if (predicateType.equals(OdsPredicateType.NOT.value())
+        && predicateValues.size() == 1) {
       var result = document.read(predicateKey);
       return !matchesPredicate(predicateValues, result);
     } else if (
@@ -90,7 +96,7 @@ public class SpecimenEvaluationComponent {
   }
 
   private static boolean matchPredicateArray(List<Object> predicateValues, Object result) {
-    if (result instanceof ArrayList<?>){
+    if (result instanceof ArrayList<?>) {
       for (Object val : (ArrayList<?>) result) {
         if (predicateValues.contains(val)) {
           return true;
@@ -103,7 +109,7 @@ public class SpecimenEvaluationComponent {
   }
 
   private static boolean matchesPredicate(List<Object> predicateValues, Object result) {
-    if (result instanceof ArrayList<?>){
+    if (result instanceof ArrayList<?>) {
       return ((ArrayList<?>) result).contains(predicateValues.getFirst());
     } else {
       return predicateValues.getFirst().equals(result);
