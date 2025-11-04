@@ -96,6 +96,9 @@ public class SpecimenEvaluationComponent {
   }
 
   private static boolean matchPredicateArray(List<Object> predicateValues, Object result) {
+    if (predicateValues == null || predicateValues.isEmpty()) {
+      return false;
+    }
     if (result instanceof ArrayList<?>) {
       for (Object val : (ArrayList<?>) result) {
         if (predicateValues.contains(val)) {
@@ -109,6 +112,9 @@ public class SpecimenEvaluationComponent {
   }
 
   private static boolean matchesPredicate(List<Object> predicateValues, Object result) {
+    if (predicateValues == null || predicateValues.isEmpty()) {
+      return false;
+    }
     if (result instanceof ArrayList<?>) {
       return ((ArrayList<?>) result).contains(predicateValues.getFirst());
     } else {

@@ -106,7 +106,7 @@ class SpecimenEvaluationComponentTest {
     var result = component.evaluateSpecimen(specimen, filter);
 
     // Then
-    assertThat(result).isEqualTo(false);
+    assertThat(result).isFalse();
   }
 
   @ParameterizedTest
