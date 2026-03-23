@@ -17,12 +17,6 @@ public class RabbitMqProperties {
   @NotBlank
   private String routingKeyName = "digital-specimen";
 
-  @NotBlank
-  private String ingestionDlqExchangeName = "virtual-collection-ingestion-exchange-dlq";
-
-  @NotBlank
-  private String ingestionDlqKeyName = "virtual-collection-ingestion-dlq";
-
   @Positive
   private int batchSize = 500;
 }

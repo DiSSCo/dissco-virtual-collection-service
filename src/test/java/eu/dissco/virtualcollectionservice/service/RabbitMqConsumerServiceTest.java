@@ -18,14 +18,12 @@ class RabbitMqConsumerServiceTest {
   private VirtualCollectionProcessingService processingService;
   @Mock
   private DigitalSpecimenProcessingService digitalSpecimenProcessingService;
-  @Mock
-  private RabbitMqPublisherService publisherService;
   private RabbitMqConsumerService consumerService;
 
   @BeforeEach
   void setup() {
     consumerService = new RabbitMqConsumerService(MAPPER, processingService,
-        digitalSpecimenProcessingService, publisherService);
+        digitalSpecimenProcessingService);
   }
 
   @Test

@@ -1,8 +1,8 @@
 package eu.dissco.virtualcollectionservice.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
 import eu.dissco.virtualcollectionservice.schema.DigitalMedia;
+import tools.jackson.databind.JsonNode;
 
 
 public record DigitalMediaWrapper(

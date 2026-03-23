@@ -3,9 +3,6 @@ package eu.dissco.virtualcollectionservice.service;
 import static eu.dissco.virtualcollectionservice.component.ElasticSearchQueryParser.parseTargetFilterToQuery;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.dissco.virtualcollectionservice.domain.DigitalSpecimenEvent;
 import eu.dissco.virtualcollectionservice.domain.DigitalSpecimenWrapper;
 import eu.dissco.virtualcollectionservice.domain.VirtualCollectionAction;
@@ -19,6 +16,8 @@ import java.util.Collections;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 @Slf4j
 @Service
@@ -30,11 +29,11 @@ public class VirtualCollectionProcessingService extends AbstractProcessingServic
   private final RabbitMqPublisherService rabbitMqPublisherService;
 
 
-  public VirtualCollectionProcessingService(ObjectMapper objectMapper,
+  public VirtualCollectionProcessingService(JsonMapper jsonMapper,
       ElasticSearchRepository elasticSearchRepository,
       RabbitMqPublisherService rabbitMqPublisherService,
       ApplicationProperties applicationProperties) {
-    super(objectMapper, applicationProperties);
+    super(jsonMapper, applicationProperties);
     this.elasticSearchRepository = elasticSearchRepository;
     this.rabbitMqPublisherService = rabbitMqPublisherService;
   }
@@ -61,7 +60,7 @@ public class VirtualCollectionProcessingService extends AbstractProcessingServic
         keepSearching = false;
       } else {
         processSearchResult(searchResult, virtualCollectionEvent);
-        lastId = searchResult.getLast().get(ID_FIELD).asText();
+        lastId = searchResult.getLast().get(ID_FIELD).asString();
         resultsProcessed += searchResult.size();
       }
     }
@@ -73,22 +72,16 @@ public class VirtualCollectionProcessingService extends AbstractProcessingServic
     log.info("Processing {} results", searchResult.size());
     var virtualCollectionId = virtualCollectionEvent.virtualCollection().getId();
     var virtualCollectionUri = URI.create(virtualCollectionId);
-    searchResult.stream().map(json -> objectMapper.convertValue(json, DigitalSpecimen.class))
+    searchResult.stream().map(json -> jsonMapper.convertValue(json, DigitalSpecimen.class))
         .forEach(digitalSpecimen -> {
           log.info("Processing digital specimen with id: {}", digitalSpecimen.getId());
-          try {
-            if (VirtualCollectionAction.CREATE.equals(virtualCollectionEvent.action())) {
-              addVirtualCollection(digitalSpecimen, virtualCollectionId, virtualCollectionUri);
-            } else {
-              removeVirtualCollection(digitalSpecimen, virtualCollectionId, virtualCollectionUri);
-            }
-            var digitalSpecimenEvent = wrapIntoEvent(digitalSpecimen);
-            rabbitMqPublisherService.publishDigitalSpecimen(digitalSpecimenEvent);
-          } catch (JsonProcessingException e) {
-            log.error(
-                "Manual action needed. Error publishing digital specimen with id: {}, error: {}",
-                digitalSpecimen.getId(), e.getMessage());
+          if (VirtualCollectionAction.CREATE.equals(virtualCollectionEvent.action())) {
+            addVirtualCollection(digitalSpecimen, virtualCollectionId, virtualCollectionUri);
+          } else {
+            removeVirtualCollection(digitalSpecimen, virtualCollectionId, virtualCollectionUri);
           }
+          var digitalSpecimenEvent = wrapIntoEvent(digitalSpecimen);
+          rabbitMqPublisherService.publishDigitalSpecimen(digitalSpecimenEvent);
         });
   }
 
@@ -108,7 +101,7 @@ public class VirtualCollectionProcessingService extends AbstractProcessingServic
             digitalSpecimen.getOdsNormalisedPhysicalSpecimenID(),
             digitalSpecimen.getOdsFdoType(),
             digitalSpecimen,
-            objectMapper.createObjectNode()
+            null
         ),
         Collections.emptyList(),
         false,

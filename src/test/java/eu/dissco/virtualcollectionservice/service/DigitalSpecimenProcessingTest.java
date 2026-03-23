@@ -5,7 +5,7 @@ import static eu.dissco.virtualcollectionservice.utils.TestUtils.MAPPER;
 import static eu.dissco.virtualcollectionservice.utils.TestUtils.givenDigitalSpecimenEvent;
 import static eu.dissco.virtualcollectionservice.utils.TestUtils.givenDigitalSpecimenEventWithVC;
 import static eu.dissco.virtualcollectionservice.utils.TestUtils.givenVirtualCollection;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;

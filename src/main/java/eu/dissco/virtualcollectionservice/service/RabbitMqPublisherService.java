@@ -1,13 +1,12 @@
 package eu.dissco.virtualcollectionservice.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.dissco.virtualcollectionservice.domain.DigitalSpecimenEvent;
 import eu.dissco.virtualcollectionservice.property.RabbitMqProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.json.JsonMapper;
 
 @Slf4j
 @Service
@@ -16,18 +15,12 @@ public class RabbitMqPublisherService {
 
   private final RabbitTemplate rabbitTemplate;
   private final RabbitMqProperties rabbitProperties;
-  private final ObjectMapper objectMapper;
+  private final JsonMapper jsonMapper;
 
-  public void publishDigitalSpecimen(DigitalSpecimenEvent digitalSpecimenEvent)
-      throws JsonProcessingException {
+  public void publishDigitalSpecimen(DigitalSpecimenEvent digitalSpecimenEvent) {
     rabbitTemplate.convertAndSend(rabbitProperties.getExchangeName(),
         rabbitProperties.getRoutingKeyName(),
-        objectMapper.writeValueAsString(digitalSpecimenEvent));
-  }
-
-  public void sendMessageDLQ(Object message) {
-    rabbitTemplate.convertAndSend(rabbitProperties.getIngestionDlqExchangeName(),
-        rabbitProperties.getIngestionDlqKeyName(), message);
+        jsonMapper.writeValueAsString(digitalSpecimenEvent));
   }
 
 }
