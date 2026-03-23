@@ -11,7 +11,6 @@ import static eu.dissco.virtualcollectionservice.utils.TestUtils.givenTargetDigi
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import eu.dissco.virtualcollectionservice.schema.DigitalSpecimen;
 import eu.dissco.virtualcollectionservice.schema.OdsHasPredicate;
 import eu.dissco.virtualcollectionservice.schema.TargetDigitalObjectFilter;
@@ -57,7 +56,8 @@ class SpecimenEvaluationComponentTest {
             .withOdsHasPredicates(List.of(
                 new OdsHasPredicate()
                     .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.IN)
-                    .withOdsPredicateKey("$['ods:hasIdentifications'][*]['ods:hasTaxonIdentifications'][*]['dwc:kingdom']")
+                    .withOdsPredicateKey(
+                        "$['ods:hasIdentifications'][*]['ods:hasTaxonIdentifications'][*]['dwc:kingdom']")
                     .withOdsPredicateValues(List.of("plantae", "Plantae"))
             )), true),
         Arguments.of(new TargetDigitalObjectFilter()
@@ -65,7 +65,8 @@ class SpecimenEvaluationComponentTest {
             .withOdsHasPredicates(List.of(
                 new OdsHasPredicate()
                     .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.IN)
-                    .withOdsPredicateKey("$['ods:hasIdentifications'][*]['ods:hasTaxonIdentifications'][*]['dwc:kingdom']")
+                    .withOdsPredicateKey(
+                        "$['ods:hasIdentifications'][*]['ods:hasTaxonIdentifications'][*]['dwc:kingdom']")
                     .withOdsPredicateValues(List.of("Animalia", "animalia"))
             )), false));
   }
@@ -77,8 +78,7 @@ class SpecimenEvaluationComponentTest {
 
   @ParameterizedTest
   @MethodSource("evaluateSpecimenProvider")
-  void testEvaluateSpecimen(TargetDigitalObjectFilter filter, boolean expected)
-      throws JsonProcessingException {
+  void testEvaluateSpecimen(TargetDigitalObjectFilter filter, boolean expected) {
     // Given
     var specimen = givenDigitalSpecimen();
 
@@ -90,15 +90,15 @@ class SpecimenEvaluationComponentTest {
   }
 
   @Test
-  void testEvaluateEmptySpecimen()
-      throws JsonProcessingException {
+  void testEvaluateEmptySpecimen() {
     // Given
     var filter = new TargetDigitalObjectFilter()
         .withOdsPredicateType(OdsPredicateType.OR)
         .withOdsHasPredicates(List.of(
             new OdsHasPredicate()
                 .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.IN)
-                .withOdsPredicateKey("$['ods:hasIdentifications'][*]['ods:hasTaxonIdentifications'][*]['dwc:kingdom']")
+                .withOdsPredicateKey(
+                    "$['ods:hasIdentifications'][*]['ods:hasTaxonIdentifications'][*]['dwc:kingdom']")
                 .withOdsPredicateValues(List.of("Animalia", "animalia"))));
     var specimen = new DigitalSpecimen();
 

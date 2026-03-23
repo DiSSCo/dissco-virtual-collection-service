@@ -1,6 +1,5 @@
 package eu.dissco.virtualcollectionservice.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import eu.dissco.virtualcollectionservice.domain.DigitalSpecimenEvent;
 import eu.dissco.virtualcollectionservice.domain.VirtualCollectionEvent;
 import java.io.IOException;
@@ -24,7 +23,7 @@ public class RabbitMqConsumerService {
 
   @RabbitListener(queues = {
       "${rabbitmq.ingestion-queue-name:virtual-collection-ingestion-queue}"}, containerFactory = "consumerBatchContainerFactory")
-  public void getMessages(@Payload List<String> messages) throws JsonProcessingException {
+  public void getMessages(@Payload List<String> messages) {
     var events = messages.stream()
         .map(message -> jsonMapper.readValue(message, DigitalSpecimenEvent.class))
         .filter(Objects::nonNull).toList();
