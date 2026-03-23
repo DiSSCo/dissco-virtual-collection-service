@@ -1,6 +1,5 @@
 package eu.dissco.virtualcollectionservice.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import eu.dissco.virtualcollectionservice.component.SpecimenEvaluationComponent;
 import eu.dissco.virtualcollectionservice.component.VirtualCollectionCacheComponent;
 import eu.dissco.virtualcollectionservice.domain.DigitalSpecimenEvent;
@@ -30,8 +29,7 @@ public class DigitalSpecimenProcessingService extends AbstractProcessingService 
   }
 
 
-  public void handleIngestionEvents(List<DigitalSpecimenEvent> events)
-      throws JsonProcessingException {
+  public void handleIngestionEvents(List<DigitalSpecimenEvent> events) {
     log.info("Handling {} ingestion events", events.size());
     for (var event : events) {
       for (var virtualCollection : cache.getCache()) {
