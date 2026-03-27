@@ -3,7 +3,6 @@ package eu.dissco.virtualcollectionservice.component;
 import static eu.dissco.virtualcollectionservice.utils.FilterParseUtils.harmonizeValues;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
@@ -17,20 +16,21 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.json.JsonMapper;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class SpecimenEvaluationComponent {
 
-  private final ObjectMapper objectMapper;
+  private final JsonMapper jsonMapper;
   private final ParseContext jsonPath = JsonPath.using(
       Configuration.defaultConfiguration()
           .addOptions(Option.ALWAYS_RETURN_LIST)
           .addOptions(Option.SUPPRESS_EXCEPTIONS));
 
   public boolean evaluateSpecimen(DigitalSpecimen specimen,
-      TargetDigitalObjectFilter filter) throws JsonProcessingException {
+      TargetDigitalObjectFilter filter) {
     if (filter.getOdsHasPredicates() == null || filter.getOdsHasPredicates().isEmpty()) {
       return handleSinglePredicate(specimen, filter);
     } else if (filter.getOdsHasPredicates() != null && !filter.getOdsHasPredicates().isEmpty()) {
@@ -42,10 +42,9 @@ public class SpecimenEvaluationComponent {
   }
 
   private boolean handleMultiplePredicates(DigitalSpecimen specimen,
-      TargetDigitalObjectFilter filter)
-      throws JsonProcessingException {
+      TargetDigitalObjectFilter filter) {
     log.debug("Assuming this is a list of predicates: {}", filter);
-    var document = jsonPath.parse(objectMapper.writeValueAsString(specimen));
+    var document = jsonPath.parse(jsonMapper.writeValueAsString(specimen));
     for (var predicate : filter.getOdsHasPredicates()) {
       var result = checkPredicate(document, predicate.getOdsPredicateType().value(),
           predicate.getOdsPredicateKey(),
@@ -67,12 +66,12 @@ public class SpecimenEvaluationComponent {
     }
   }
 
-  private boolean handleSinglePredicate(DigitalSpecimen specimen, TargetDigitalObjectFilter filter)
-      throws JsonProcessingException {
+  private boolean handleSinglePredicate(DigitalSpecimen specimen,
+      TargetDigitalObjectFilter filter) {
     log.debug("Assuming this is an individual predicate: {}", filter);
     var harmonizedValues = harmonizeValues(filter.getOdsPredicateValue(),
         filter.getOdsPredicateValues());
-    var document = jsonPath.parse(objectMapper.writeValueAsString(specimen));
+    var document = jsonPath.parse(jsonMapper.writeValueAsString(specimen));
     return checkPredicate(document, filter.getOdsPredicateType().value(),
         filter.getOdsPredicateKey(), harmonizedValues);
   }

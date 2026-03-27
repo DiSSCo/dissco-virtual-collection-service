@@ -4,9 +4,8 @@ import static eu.dissco.virtualcollectionservice.database.jooq.Tables.VIRTUAL_CO
 import static eu.dissco.virtualcollectionservice.utils.TestUtils.MAPPER;
 import static eu.dissco.virtualcollectionservice.utils.TestUtils.givenVirtualCollection;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.testcontainers.containers.PostgreSQLContainer.IMAGE;
+import static org.testcontainers.postgresql.PostgreSQLContainer.IMAGE;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.zaxxer.hikari.HikariDataSource;
 import eu.dissco.virtualcollectionservice.database.jooq.enums.CollectionType;
 import eu.dissco.virtualcollectionservice.schema.VirtualCollection;
@@ -20,9 +19,9 @@ import org.jooq.impl.DefaultDSLContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 @Testcontainers
@@ -32,7 +31,7 @@ class VirtualCollectionRepositoryIT {
       DockerImageName.parse("postgres:17.5").asCompatibleSubstituteFor(IMAGE);
 
   @Container
-  private static final PostgreSQLContainer<?> CONTAINER = new PostgreSQLContainer<>(POSTGIS);
+  private static final PostgreSQLContainer CONTAINER = new PostgreSQLContainer(POSTGIS);
   protected DSLContext context;
   private HikariDataSource dataSource;
   private VirtualCollectionRepository repository;
@@ -63,7 +62,7 @@ class VirtualCollectionRepositoryIT {
   }
 
   @Test
-  void testGetAllVirtualCollections() throws JsonProcessingException {
+  void testGetAllVirtualCollections() {
     // Given
     var virtualCollections = List.of(givenVirtualCollection(),
         givenVirtualCollection("https://hdl.handle.net/TEST/YYY-YYY-YYY",
@@ -76,7 +75,7 @@ class VirtualCollectionRepositoryIT {
     assertThat(result).hasSameElementsAs(virtualCollections);
   }
 
-  private void insertVirtualCollection(List<VirtualCollection> virtualCollections) throws JsonProcessingException {
+  private void insertVirtualCollection(List<VirtualCollection> virtualCollections) {
     for (var virtualCollection : virtualCollections) {
       context.insertInto(VIRTUAL_COLLECTION)
           .set(VIRTUAL_COLLECTION.ID,
@@ -92,7 +91,7 @@ class VirtualCollectionRepositoryIT {
     }
   }
 
-  private JSONB mapToJSONB(VirtualCollection virtualCollection) throws JsonProcessingException {
+  private JSONB mapToJSONB(VirtualCollection virtualCollection) {
     return JSONB.valueOf(MAPPER.writeValueAsString(virtualCollection));
   }
 

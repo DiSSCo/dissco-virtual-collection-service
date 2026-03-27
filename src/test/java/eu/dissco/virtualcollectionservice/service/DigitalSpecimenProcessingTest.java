@@ -5,13 +5,11 @@ import static eu.dissco.virtualcollectionservice.utils.TestUtils.MAPPER;
 import static eu.dissco.virtualcollectionservice.utils.TestUtils.givenDigitalSpecimenEvent;
 import static eu.dissco.virtualcollectionservice.utils.TestUtils.givenDigitalSpecimenEventWithVC;
 import static eu.dissco.virtualcollectionservice.utils.TestUtils.givenVirtualCollection;
-import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mockStatic;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import eu.dissco.virtualcollectionservice.component.SpecimenEvaluationComponent;
 import eu.dissco.virtualcollectionservice.component.VirtualCollectionCacheComponent;
 import eu.dissco.virtualcollectionservice.property.ApplicationProperties;
@@ -67,7 +65,7 @@ class DigitalSpecimenProcessingTest {
   }
 
   @Test
-  void handleIngestionEvents() throws JsonProcessingException {
+  void handleIngestionEvents() {
     // Given
     var virtualCollection = givenVirtualCollection();
     var secondFilter = new TargetDigitalObjectFilter()
@@ -96,7 +94,7 @@ class DigitalSpecimenProcessingTest {
   }
 
   @Test
-  void handleIngestionEventsNoMatch() throws JsonProcessingException {
+  void handleIngestionEventsNoMatch() {
     // Given
     var virtualCollection = givenVirtualCollection();
     var digitalSpecimen = givenDigitalSpecimenEvent();
@@ -110,26 +108,6 @@ class DigitalSpecimenProcessingTest {
 
     // Then
     then(publisherService).should().publishDigitalSpecimen(digitalSpecimen);
-  }
-
-  @Test
-  void handleIngestionEventsInvalidVC() throws JsonProcessingException {
-    // Given
-    var virtualCollection = givenVirtualCollection();
-    var digitalSpecimen = givenDigitalSpecimenEvent();
-    given(cache.getCache()).willReturn(Set.of(virtualCollection));
-    given(
-        evaluationComponent.evaluateSpecimen(digitalSpecimen.digitalSpecimenWrapper().attributes(),
-            virtualCollection.getOdsHasTargetDigitalObjectFilter())).willThrow(
-        new JsonProcessingException("Invalid Json") {
-        });
-
-    // When
-    assertThrows(JsonProcessingException.class,
-        () -> processingService.handleIngestionEvents(List.of(digitalSpecimen)));
-
-    // Then
-    then(publisherService).shouldHaveNoInteractions();
   }
 
 }

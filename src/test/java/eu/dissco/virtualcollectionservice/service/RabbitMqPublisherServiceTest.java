@@ -12,8 +12,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.testcontainers.containers.RabbitMQContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.rabbitmq.RabbitMQContainer;
 
 @Testcontainers
 class RabbitMqPublisherServiceTest {
@@ -61,7 +61,7 @@ class RabbitMqPublisherServiceTest {
   }
 
   @Test
-  void testPublishDigitalSpecimen() throws IOException {
+  void testPublishDigitalSpecimen() {
     // Given
     var event = givenDigitalSpecimenEventWithVC();
 

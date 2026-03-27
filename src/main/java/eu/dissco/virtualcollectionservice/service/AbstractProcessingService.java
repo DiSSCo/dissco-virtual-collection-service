@@ -1,6 +1,5 @@
 package eu.dissco.virtualcollectionservice.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.dissco.virtualcollectionservice.property.ApplicationProperties;
 import eu.dissco.virtualcollectionservice.schema.Agent;
 import eu.dissco.virtualcollectionservice.schema.Agent.Type;
@@ -17,6 +16,7 @@ import java.util.Date;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.json.JsonMapper;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -24,7 +24,7 @@ public class AbstractProcessingService {
 
   private static final String HAS_VIRTUAL_COLLECTION = "hasVirtualCollection";
 
-  protected final ObjectMapper objectMapper;
+  protected final JsonMapper jsonMapper;
   private final ApplicationProperties applicationProperties;
 
   protected void addVirtualCollection(DigitalSpecimen digitalSpecimen, String virtualCollectionId,

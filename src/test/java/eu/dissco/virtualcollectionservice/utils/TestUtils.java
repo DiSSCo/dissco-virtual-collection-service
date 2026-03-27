@@ -1,10 +1,11 @@
 package eu.dissco.virtualcollectionservice.utils;
 
+import static eu.dissco.virtualcollectionservice.utils.ApplicationUtils.DATE_STRING;
+
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonSetter.Value;
+import com.fasterxml.jackson.annotation.Nulls;
 import eu.dissco.virtualcollectionservice.domain.DigitalSpecimenEvent;
 import eu.dissco.virtualcollectionservice.domain.DigitalSpecimenWrapper;
 import eu.dissco.virtualcollectionservice.domain.VirtualCollectionAction;
@@ -25,16 +26,33 @@ import eu.dissco.virtualcollectionservice.schema.VirtualCollection;
 import eu.dissco.virtualcollectionservice.schema.VirtualCollection.LtcBasisOfScheme;
 import eu.dissco.virtualcollectionservice.schema.VirtualCollection.OdsStatus;
 import java.net.URI;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimeZone;
 import java.util.stream.Stream;
 import org.junit.jupiter.params.provider.Arguments;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 public class TestUtils {
 
-  public static final ObjectMapper MAPPER = new ObjectMapper().findAndRegisterModules();
+  public static final JsonMapper MAPPER = JsonMapper.builder()
+      .findAndAddModules()
+      .defaultDateFormat(new SimpleDateFormat(DATE_STRING))
+      .defaultTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC))
+      .withConfigOverride(List.class, cfg ->
+          cfg.setNullHandling(Value.forValueNulls(Nulls.AS_EMPTY)))
+      .withConfigOverride(Map.class, cfg ->
+          cfg.setNullHandling(Value.forValueNulls(Nulls.AS_EMPTY)))
+      .withConfigOverride(Set.class, cfg ->
+          cfg.setNullHandling(Value.forValueNulls(Nulls.AS_EMPTY)))
+      .build();
   public static final String SPECIMEN_ID = "https://doi.org/TEST/ZZZ-X4T-YYV";
   public static final String APP_ID = "https://doi.org/10.5281/zenodo.17182153";
   public static final String APP_NAME = "DiSSCo Virtual Collection Service";
@@ -171,20 +189,19 @@ public class TestUtils {
             .caseInsensitive(true)).build())).build();
   }
 
-  public static DigitalSpecimenEvent givenDigitalSpecimenEventWithVC()
-      throws JsonProcessingException {
+  public static DigitalSpecimenEvent givenDigitalSpecimenEventWithVC() {
     return givenDigitalSpecimenEventWithVC(false);
   }
 
-  public static DigitalSpecimenEvent givenDigitalSpecimenEventWithVC(boolean isDataFromSourceSystem)
-      throws JsonProcessingException {
+  public static DigitalSpecimenEvent givenDigitalSpecimenEventWithVC(
+      boolean isDataFromSourceSystem) {
     return new DigitalSpecimenEvent(
         Collections.emptySet(),
         new DigitalSpecimenWrapper(
             "https://herbarium.bgbm.org/object/B100039428",
             "https://doi.org/21.T11148/894b1e6cad57e921764e",
             givenDigitalSpecimenWithVC(),
-            MAPPER.createObjectNode()
+            null
         ),
         Collections.emptyList(),
         false,
@@ -192,20 +209,18 @@ public class TestUtils {
     );
   }
 
-  public static DigitalSpecimenEvent givenDigitalSpecimenEvent()
-      throws JsonProcessingException {
+  public static DigitalSpecimenEvent givenDigitalSpecimenEvent() {
     return givenDigitalSpecimenEvent(true);
   }
 
-  public static DigitalSpecimenEvent givenDigitalSpecimenEvent(boolean isDataFromSourceSystem)
-      throws JsonProcessingException {
+  public static DigitalSpecimenEvent givenDigitalSpecimenEvent(boolean isDataFromSourceSystem) {
     return new DigitalSpecimenEvent(
         Collections.emptySet(),
         new DigitalSpecimenWrapper(
             "https://herbarium.bgbm.org/object/B100039428",
             "https://doi.org/21.T11148/894b1e6cad57e921764e",
             givenDigitalSpecimen(),
-            MAPPER.createObjectNode()
+            null
         ),
         Collections.emptyList(),
         false,
@@ -213,7 +228,7 @@ public class TestUtils {
     );
   }
 
-  public static DigitalSpecimen givenDigitalSpecimenWithVC() throws JsonProcessingException {
+  public static DigitalSpecimen givenDigitalSpecimenWithVC() {
     var digitalSpecimen = MAPPER.convertValue(givenDigitalSpecimen(), DigitalSpecimen.class);
     digitalSpecimen.getOdsHasEntityRelationships().add(
         new EntityRelationship()
@@ -246,11 +261,11 @@ public class TestUtils {
     return digitalSpecimen;
   }
 
-  public static DigitalSpecimen givenDigitalSpecimen() throws JsonProcessingException {
+  public static DigitalSpecimen givenDigitalSpecimen() {
     return MAPPER.convertValue(givenSpecimenNode(), DigitalSpecimen.class);
   }
 
-  public static JsonNode givenSpecimenNode() throws JsonProcessingException {
+  public static JsonNode givenSpecimenNode() {
     return MAPPER.readTree(
         """
             {
