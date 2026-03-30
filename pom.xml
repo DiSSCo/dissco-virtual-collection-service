@@ -183,7 +183,7 @@
           <arguments>
             <argument>https://schemas.dissco.tech/schemas/fdo-type/digital-specimen/0.4.0/digital-specimen.json</argument>
             <argument>https://schemas.dissco.tech/schemas/fdo-type/digital-media/0.4.0/digital-media.json</argument>
-            <argument>https://schemas.dissco.tech/schemas/fdo-type/virtual-collection/0.1.0/virtual-collection.json</argument>
+            <argument>https://schemas.dissco.tech/schemas/fdo-type/virtual-collection/0.2.0/virtual-collection.json</argument>
           </arguments>
         </configuration>
       </plugin>
