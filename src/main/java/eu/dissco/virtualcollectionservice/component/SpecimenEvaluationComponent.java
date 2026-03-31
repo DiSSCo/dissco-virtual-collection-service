@@ -2,7 +2,6 @@ package eu.dissco.virtualcollectionservice.component;
 
 import static eu.dissco.virtualcollectionservice.utils.FilterParseUtils.harmonizeValues;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
