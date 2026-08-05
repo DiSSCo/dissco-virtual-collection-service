@@ -13,37 +13,37 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class VirtualCollectionCacheComponentTest {
 
-  @Mock
-  private VirtualCollectionRepository repository;
+	@Mock
+	private VirtualCollectionRepository repository;
 
-  private VirtualCollectionCacheComponent cache;
+	private VirtualCollectionCacheComponent cache;
 
-  @BeforeEach
-  void setUp() {
-    cache = new VirtualCollectionCacheComponent(repository);
-  }
+	@BeforeEach
+	void setUp() {
+		cache = new VirtualCollectionCacheComponent(repository);
+	}
 
-  @Test
-  void testFillCache() {
-    // Given
+	@Test
+	void testFillCache() {
+		// Given
 
-    // When
-    cache.fillCache();
+		// When
+		cache.fillCache();
 
-    // Then
-    then(repository).should().getAllVirtualCollections();
-  }
+		// Then
+		then(repository).should().getAllVirtualCollections();
+	}
 
-  @Test
-  void testRefreshCache() {
-    // Given
-    cache.fillCache();
+	@Test
+	void testRefreshCache() {
+		// Given
+		cache.fillCache();
 
-    // When
-    cache.refreshCache();
+		// When
+		cache.refreshCache();
 
-    // Then
-    then(repository).should(times(2)).getAllVirtualCollections();
-  }
+		// Then
+		then(repository).should(times(2)).getAllVirtualCollections();
+	}
 
 }

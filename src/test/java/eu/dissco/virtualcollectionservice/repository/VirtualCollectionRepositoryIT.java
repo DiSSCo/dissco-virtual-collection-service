@@ -27,73 +27,73 @@ import org.testcontainers.utility.DockerImageName;
 @Testcontainers
 class VirtualCollectionRepositoryIT {
 
-  private static final DockerImageName POSTGIS =
-      DockerImageName.parse("postgres:17.5").asCompatibleSubstituteFor(IMAGE);
+	private static final DockerImageName POSTGIS = DockerImageName.parse("postgres:17.5")
+		.asCompatibleSubstituteFor(IMAGE);
 
-  @Container
-  private static final PostgreSQLContainer CONTAINER = new PostgreSQLContainer(POSTGIS);
-  protected DSLContext context;
-  private HikariDataSource dataSource;
-  private VirtualCollectionRepository repository;
+	@Container
+	private static final PostgreSQLContainer CONTAINER = new PostgreSQLContainer(POSTGIS);
 
-  private static CollectionType getLtcBasisOfScheme(VirtualCollection virtualCollection) {
-    return switch (virtualCollection.getLtcBasisOfScheme()) {
-      case LtcBasisOfScheme.REFERENCE_COLLECTION -> CollectionType.REFERENCE_COLLECTION;
-      case LtcBasisOfScheme.COMMUNITY_COLLECTION -> CollectionType.COMMUNITY_COLLECTION;
-    };
-  }
+	protected DSLContext context;
 
-  @BeforeEach
-  void prepareDatabase() {
-    dataSource = new HikariDataSource();
-    dataSource.setJdbcUrl(CONTAINER.getJdbcUrl());
-    dataSource.setUsername(CONTAINER.getUsername());
-    dataSource.setPassword(CONTAINER.getPassword());
-    dataSource.setMaximumPoolSize(2);
-    dataSource.setConnectionInitSql(CONTAINER.getTestQueryString());
-    Flyway.configure().mixed(true).dataSource(dataSource).load().migrate();
-    context = new DefaultDSLContext(dataSource, SQLDialect.POSTGRES);
-    repository = new VirtualCollectionRepository(context, MAPPER);
-  }
+	private HikariDataSource dataSource;
 
-  @AfterEach
-  void disposeDataSource() {
-    dataSource.close();
-  }
+	private VirtualCollectionRepository repository;
 
-  @Test
-  void testGetAllVirtualCollections() {
-    // Given
-    var virtualCollections = List.of(givenVirtualCollection(),
-        givenVirtualCollection("https://hdl.handle.net/TEST/YYY-YYY-YYY",
-            "Second Virtual Collection"));
-    insertVirtualCollection(virtualCollections);
+	private static CollectionType getLtcBasisOfScheme(VirtualCollection virtualCollection) {
+		return switch (virtualCollection.getLtcBasisOfScheme()) {
+			case LtcBasisOfScheme.REFERENCE_COLLECTION -> CollectionType.REFERENCE_COLLECTION;
+			case LtcBasisOfScheme.COMMUNITY_COLLECTION -> CollectionType.COMMUNITY_COLLECTION;
+		};
+	}
 
-    // When
-    var result = repository.getAllVirtualCollections();
-    // Then
-    assertThat(result).hasSameElementsAs(virtualCollections);
-  }
+	@BeforeEach
+	void prepareDatabase() {
+		dataSource = new HikariDataSource();
+		dataSource.setJdbcUrl(CONTAINER.getJdbcUrl());
+		dataSource.setUsername(CONTAINER.getUsername());
+		dataSource.setPassword(CONTAINER.getPassword());
+		dataSource.setMaximumPoolSize(2);
+		dataSource.setConnectionInitSql(CONTAINER.getTestQueryString());
+		Flyway.configure().mixed(true).dataSource(dataSource).load().migrate();
+		context = new DefaultDSLContext(dataSource, SQLDialect.POSTGRES);
+		repository = new VirtualCollectionRepository(context, MAPPER);
+	}
 
-  private void insertVirtualCollection(List<VirtualCollection> virtualCollections) {
-    for (var virtualCollection : virtualCollections) {
-      context.insertInto(VIRTUAL_COLLECTION)
-          .set(VIRTUAL_COLLECTION.ID,
-              virtualCollection.getId().replace("https://hdl.handle.net/", ""))
-          .set(VIRTUAL_COLLECTION.VERSION, virtualCollection.getSchemaVersion())
-          .set(VIRTUAL_COLLECTION.NAME, virtualCollection.getLtcCollectionName())
-          .set(VIRTUAL_COLLECTION.COLLECTION_TYPE, getLtcBasisOfScheme(virtualCollection))
-          .set(VIRTUAL_COLLECTION.CREATED, virtualCollection.getSchemaDateCreated().toInstant())
-          .set(VIRTUAL_COLLECTION.MODIFIED, virtualCollection.getSchemaDateModified().toInstant())
-          .set(VIRTUAL_COLLECTION.CREATOR, virtualCollection.getSchemaCreator().getId())
-          .set(VIRTUAL_COLLECTION.DATA, mapToJSONB(virtualCollection))
-          .execute();
-    }
-  }
+	@AfterEach
+	void disposeDataSource() {
+		dataSource.close();
+	}
 
-  private JSONB mapToJSONB(VirtualCollection virtualCollection) {
-    return JSONB.valueOf(MAPPER.writeValueAsString(virtualCollection));
-  }
+	@Test
+	void testGetAllVirtualCollections() {
+		// Given
+		var virtualCollections = List.of(givenVirtualCollection(),
+				givenVirtualCollection("https://hdl.handle.net/TEST/YYY-YYY-YYY", "Second Virtual Collection"));
+		insertVirtualCollection(virtualCollections);
 
+		// When
+		var result = repository.getAllVirtualCollections();
+		// Then
+		assertThat(result).hasSameElementsAs(virtualCollections);
+	}
+
+	private void insertVirtualCollection(List<VirtualCollection> virtualCollections) {
+		for (var virtualCollection : virtualCollections) {
+			context.insertInto(VIRTUAL_COLLECTION)
+				.set(VIRTUAL_COLLECTION.ID, virtualCollection.getId().replace("https://hdl.handle.net/", ""))
+				.set(VIRTUAL_COLLECTION.VERSION, virtualCollection.getSchemaVersion())
+				.set(VIRTUAL_COLLECTION.NAME, virtualCollection.getLtcCollectionName())
+				.set(VIRTUAL_COLLECTION.COLLECTION_TYPE, getLtcBasisOfScheme(virtualCollection))
+				.set(VIRTUAL_COLLECTION.CREATED, virtualCollection.getSchemaDateCreated().toInstant())
+				.set(VIRTUAL_COLLECTION.MODIFIED, virtualCollection.getSchemaDateModified().toInstant())
+				.set(VIRTUAL_COLLECTION.CREATOR, virtualCollection.getSchemaCreator().getId())
+				.set(VIRTUAL_COLLECTION.DATA, mapToJSONB(virtualCollection))
+				.execute();
+		}
+	}
+
+	private JSONB mapToJSONB(VirtualCollection virtualCollection) {
+		return JSONB.valueOf(MAPPER.writeValueAsString(virtualCollection));
+	}
 
 }

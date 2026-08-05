@@ -25,100 +25,83 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 class SpecimenEvaluationComponentTest {
 
-  private SpecimenEvaluationComponent component;
+	private SpecimenEvaluationComponent component;
 
-  public static Stream<Arguments> evaluateSpecimenProvider() {
-    return Stream.of(
-        Arguments.of(givenTargetDigitalObjectFilter(), true),
-        Arguments.of(givenEqualsListFilter(), true),
-        Arguments.of(givenNotFilter(), true),
-        Arguments.of(givenInFilter(), true),
-        Arguments.of(givenOrFilter(), true),
-        Arguments.of(givenAndFilter(), true),
-        Arguments.of(new TargetDigitalObjectFilter()
-            .withOdsPredicateType(OdsPredicateType.AND)
-            .withOdsHasPredicates(List.of(
-                new OdsHasPredicate()
-                    .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.EQUALS)
-                    .withOdsPredicateKey("$['ods:isKnownToContainMedia']")
-                    .withOdsPredicateValue(true)
-            )), false),
-        Arguments.of(new TargetDigitalObjectFilter()
-            .withOdsPredicateType(OdsPredicateType.OR)
-            .withOdsHasPredicates(List.of(
-                new OdsHasPredicate()
-                    .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.EQUALS)
-                    .withOdsPredicateKey("$['ods:hasEvents'][*]['ods:hasLocation']['dwc:country']")
-                    .withOdsPredicateValue("El Salvador")
-            )), true),
-        Arguments.of(new TargetDigitalObjectFilter()
-            .withOdsPredicateType(OdsPredicateType.OR)
-            .withOdsHasPredicates(List.of(
-                new OdsHasPredicate()
-                    .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.IN)
-                    .withOdsPredicateKey(
-                        "$['ods:hasIdentifications'][*]['ods:hasTaxonIdentifications'][*]['dwc:kingdom']")
-                    .withOdsPredicateValues(List.of("plantae", "Plantae"))
-            )), true),
-        Arguments.of(new TargetDigitalObjectFilter()
-            .withOdsPredicateType(OdsPredicateType.OR)
-            .withOdsHasPredicates(List.of(
-                new OdsHasPredicate()
-                    .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.IN)
-                    .withOdsPredicateKey(
-                        "$['ods:hasIdentifications'][*]['ods:hasTaxonIdentifications'][*]['dwc:kingdom']")
-                    .withOdsPredicateValues(List.of("Animalia", "animalia"))
-            )), false));
-  }
+	public static Stream<Arguments> evaluateSpecimenProvider() {
+		return Stream
+			.of(Arguments.of(givenTargetDigitalObjectFilter(), true), Arguments.of(givenEqualsListFilter(), true),
+					Arguments.of(givenNotFilter(), true), Arguments.of(givenInFilter(), true),
+					Arguments.of(givenOrFilter(), true), Arguments.of(givenAndFilter(), true),
+					Arguments.of(new TargetDigitalObjectFilter().withOdsPredicateType(OdsPredicateType.AND)
+						.withOdsHasPredicates(List
+							.of(new OdsHasPredicate().withOdsPredicateType(OdsHasPredicate.OdsPredicateType.EQUALS)
+								.withOdsPredicateKey("$['ods:isKnownToContainMedia']")
+								.withOdsPredicateValue(true))),
+							false),
+					Arguments.of(new TargetDigitalObjectFilter().withOdsPredicateType(OdsPredicateType.OR)
+						.withOdsHasPredicates(List
+							.of(new OdsHasPredicate().withOdsPredicateType(OdsHasPredicate.OdsPredicateType.EQUALS)
+								.withOdsPredicateKey("$['ods:hasEvents'][*]['ods:hasLocation']['dwc:country']")
+								.withOdsPredicateValue("El Salvador"))),
+							true),
+					Arguments.of(new TargetDigitalObjectFilter().withOdsPredicateType(OdsPredicateType.OR)
+						.withOdsHasPredicates(List.of(new OdsHasPredicate()
+							.withOdsPredicateType(OdsHasPredicate.OdsPredicateType.IN)
+							.withOdsPredicateKey(
+									"$['ods:hasIdentifications'][*]['ods:hasTaxonIdentifications'][*]['dwc:kingdom']")
+							.withOdsPredicateValues(List.of("plantae", "Plantae")))), true),
+					Arguments.of(new TargetDigitalObjectFilter().withOdsPredicateType(OdsPredicateType.OR)
+						.withOdsHasPredicates(List.of(new OdsHasPredicate()
+							.withOdsPredicateType(OdsHasPredicate.OdsPredicateType.IN)
+							.withOdsPredicateKey(
+									"$['ods:hasIdentifications'][*]['ods:hasTaxonIdentifications'][*]['dwc:kingdom']")
+							.withOdsPredicateValues(List.of("Animalia", "animalia")))), false));
+	}
 
-  @BeforeEach
-  void setUp() {
-    component = new SpecimenEvaluationComponent(MAPPER);
-  }
+	@BeforeEach
+	void setUp() {
+		component = new SpecimenEvaluationComponent(MAPPER);
+	}
 
-  @ParameterizedTest
-  @MethodSource("evaluateSpecimenProvider")
-  void testEvaluateSpecimen(TargetDigitalObjectFilter filter, boolean expected) {
-    // Given
-    var specimen = givenDigitalSpecimen();
+	@ParameterizedTest
+	@MethodSource("evaluateSpecimenProvider")
+	void testEvaluateSpecimen(TargetDigitalObjectFilter filter, boolean expected) {
+		// Given
+		var specimen = givenDigitalSpecimen();
 
-    // When
-    var result = component.evaluateSpecimen(specimen, filter);
+		// When
+		var result = component.evaluateSpecimen(specimen, filter);
 
-    // Then
-    assertThat(result).isEqualTo(expected);
-  }
+		// Then
+		assertThat(result).isEqualTo(expected);
+	}
 
-  @Test
-  void testEvaluateEmptySpecimen() {
-    // Given
-    var filter = new TargetDigitalObjectFilter()
-        .withOdsPredicateType(OdsPredicateType.OR)
-        .withOdsHasPredicates(List.of(
-            new OdsHasPredicate()
-                .withOdsPredicateType(OdsHasPredicate.OdsPredicateType.IN)
-                .withOdsPredicateKey(
-                    "$['ods:hasIdentifications'][*]['ods:hasTaxonIdentifications'][*]['dwc:kingdom']")
-                .withOdsPredicateValues(List.of("Animalia", "animalia"))));
-    var specimen = new DigitalSpecimen();
+	@Test
+	void testEvaluateEmptySpecimen() {
+		// Given
+		var filter = new TargetDigitalObjectFilter().withOdsPredicateType(OdsPredicateType.OR)
+			.withOdsHasPredicates(
+					List.of(new OdsHasPredicate().withOdsPredicateType(OdsHasPredicate.OdsPredicateType.IN)
+						.withOdsPredicateKey(
+								"$['ods:hasIdentifications'][*]['ods:hasTaxonIdentifications'][*]['dwc:kingdom']")
+						.withOdsPredicateValues(List.of("Animalia", "animalia"))));
+		var specimen = new DigitalSpecimen();
 
-    // When
-    var result = component.evaluateSpecimen(specimen, filter);
+		// When
+		var result = component.evaluateSpecimen(specimen, filter);
 
-    // Then
-    assertThat(result).isFalse();
-  }
+		// Then
+		assertThat(result).isFalse();
+	}
 
-  @ParameterizedTest
-  @MethodSource("eu.dissco.virtualcollectionservice.utils.TestUtils#illegalFilters")
-  void testInvalidParseQuery(TargetDigitalObjectFilter objectFilter) {
-    // Given
-    var specimen = givenDigitalSpecimen();
+	@ParameterizedTest
+	@MethodSource("eu.dissco.virtualcollectionservice.utils.TestUtils#illegalFilters")
+	void testInvalidParseQuery(TargetDigitalObjectFilter objectFilter) {
+		// Given
+		var specimen = givenDigitalSpecimen();
 
-    // When
-    assertThrows(IllegalArgumentException.class,
-        () -> component.evaluateSpecimen(specimen, objectFilter));
-  }
-
+		// When
+		assertThrows(IllegalArgumentException.class, () -> component.evaluateSpecimen(specimen, objectFilter));
+	}
 
 }

@@ -11,12 +11,13 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "rabbitmq")
 public class RabbitMqProperties {
 
-  @NotBlank
-  private String exchangeName = "digital-specimen-exchange";
+	@NotBlank
+	private String exchangeName = "digital-specimen-exchange";
 
-  @NotBlank
-  private String routingKeyName = "digital-specimen";
+	@NotBlank
+	private String routingKeyName = "digital-specimen";
 
-  @Positive
-  private int batchSize = 500;
+	@Positive
+	private int batchSize = 500;
+
 }

@@ -10,10 +10,10 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties("application")
 public class ApplicationProperties {
 
-  @NotBlank
-  private String name = "DiSSCo Virtual Collection Service";
+	@NotBlank
+	private String name = "DiSSCo Virtual Collection Service";
 
-  @NotBlank
-  private String pid = "https://doi.org/10.5281/zenodo.17182153";
+	@NotBlank
+	private String pid = "https://doi.org/10.5281/zenodo.17182153";
 
 }

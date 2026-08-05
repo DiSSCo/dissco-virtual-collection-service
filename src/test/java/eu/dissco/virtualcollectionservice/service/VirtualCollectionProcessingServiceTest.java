@@ -32,82 +32,88 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class VirtualCollectionProcessingServiceTest {
 
-  private static MockedStatic<Instant> mockedInstant;
-  private static MockedStatic<Clock> mockedClock;
+	private static MockedStatic<Instant> mockedInstant;
 
-  @Mock
-  private ElasticSearchRepository repository;
-  @Mock
-  private RabbitMqPublisherService publisherService;
+	private static MockedStatic<Clock> mockedClock;
 
-  private VirtualCollectionProcessingService service;
+	@Mock
+	private ElasticSearchRepository repository;
 
-  private static void tearDownClock() {
-    mockedInstant.close();
-    mockedClock.close();
-  }
+	@Mock
+	private RabbitMqPublisherService publisherService;
 
-  private static void setUpInstantNow() {
-    Clock clock = Clock.fixed(CREATED, ZoneOffset.UTC);
-    Instant instant = Instant.now(clock);
-    mockedInstant = mockStatic(Instant.class);
-    mockedInstant.when(Instant::now).thenReturn(instant);
-    mockedInstant.when(() -> Instant.from(any())).thenReturn(instant);
-    mockedInstant.when(() -> Instant.parse(any())).thenReturn(instant);
-    mockedClock = mockStatic(Clock.class);
-    mockedClock.when(Clock::systemUTC).thenReturn(clock);
-  }
+	private VirtualCollectionProcessingService service;
 
-  @BeforeEach
-  void setup() {
-    service = new VirtualCollectionProcessingService(MAPPER, repository, publisherService,
-        new ApplicationProperties());
-  }
+	private static void tearDownClock() {
+		mockedInstant.close();
+		mockedClock.close();
+	}
 
-  @Test
-  void testHandleMessage() throws IOException {
-    // Given
-    setUpInstantNow();
-    var event = givenVirtualCollectionEvent();
-    given(repository.retrieveObjects(any(), eq("digital-specimen"), any(Query.class))).willReturn(
-        List.of(givenSpecimenNode())).willReturn(List.of());
+	private static void setUpInstantNow() {
+		Clock clock = Clock.fixed(CREATED, ZoneOffset.UTC);
+		Instant instant = Instant.now(clock);
+		mockedInstant = mockStatic(Instant.class);
+		mockedInstant.when(Instant::now).thenReturn(instant);
+		mockedInstant.when(() -> Instant.from(any())).thenReturn(instant);
+		mockedInstant.when(() -> Instant.parse(any())).thenReturn(instant);
+		mockedClock = mockStatic(Clock.class);
+		mockedClock.when(Clock::systemUTC).thenReturn(clock);
+	}
 
-    // When
-    service.handleMessage(event);
+	@BeforeEach
+	void setup() {
+		service = new VirtualCollectionProcessingService(MAPPER, repository, publisherService,
+				new ApplicationProperties());
+	}
 
-    // Then
-    then(publisherService).should().publishDigitalSpecimen(givenDigitalSpecimenEventWithVC());
-    tearDownClock();
-  }
+	@Test
+	void testHandleMessage() throws IOException {
+		// Given
+		setUpInstantNow();
+		var event = givenVirtualCollectionEvent();
+		given(repository.retrieveObjects(any(), eq("digital-specimen"), any(Query.class)))
+			.willReturn(List.of(givenSpecimenNode()))
+			.willReturn(List.of());
 
-  @Test
-  void testRemoveVirtualCollectionHandleMessage() throws IOException {
-    // Given
-    setUpInstantNow();
-    var event = givenVirtualCollectionEvent(DELETE);
-    var givenSpecimen = givenDigitalSpecimenWithVC();
-    given(repository.retrieveObjects(any(), eq("digital-specimen"), any(Query.class))).willReturn(
-        List.of(MAPPER.valueToTree(givenSpecimen))).willReturn(List.of());
+		// When
+		service.handleMessage(event);
 
-    // When
-    service.handleMessage(event);
+		// Then
+		then(publisherService).should().publishDigitalSpecimen(givenDigitalSpecimenEventWithVC());
+		tearDownClock();
+	}
 
-    // Then
-    then(publisherService).should().publishDigitalSpecimen(givenDigitalSpecimenEvent(false));
-    tearDownClock();
-  }
+	@Test
+	void testRemoveVirtualCollectionHandleMessage() throws IOException {
+		// Given
+		setUpInstantNow();
+		var event = givenVirtualCollectionEvent(DELETE);
+		var givenSpecimen = givenDigitalSpecimenWithVC();
+		given(repository.retrieveObjects(any(), eq("digital-specimen"), any(Query.class)))
+			.willReturn(List.of(MAPPER.valueToTree(givenSpecimen)))
+			.willReturn(List.of());
 
-  @Test
-  void testHandleMessageVCAlreadyPresent() throws IOException {
-    // Given
-    var event = givenVirtualCollectionEvent();
-    given(repository.retrieveObjects(any(), eq("digital-specimen"), any(Query.class))).willReturn(
-        List.of(MAPPER.valueToTree(givenDigitalSpecimenWithVC()))).willReturn(List.of());
+		// When
+		service.handleMessage(event);
 
-    // When
-    service.handleMessage(event);
+		// Then
+		then(publisherService).should().publishDigitalSpecimen(givenDigitalSpecimenEvent(false));
+		tearDownClock();
+	}
 
-    // Then
-    then(publisherService).should().publishDigitalSpecimen(givenDigitalSpecimenEventWithVC());
-  }
+	@Test
+	void testHandleMessageVCAlreadyPresent() throws IOException {
+		// Given
+		var event = givenVirtualCollectionEvent();
+		given(repository.retrieveObjects(any(), eq("digital-specimen"), any(Query.class)))
+			.willReturn(List.of(MAPPER.valueToTree(givenDigitalSpecimenWithVC())))
+			.willReturn(List.of());
+
+		// When
+		service.handleMessage(event);
+
+		// Then
+		then(publisherService).should().publishDigitalSpecimen(givenDigitalSpecimenEventWithVC());
+	}
+
 }

@@ -13,14 +13,15 @@ import tools.jackson.databind.json.JsonMapper;
 @RequiredArgsConstructor
 public class RabbitMqPublisherService {
 
-  private final RabbitTemplate rabbitTemplate;
-  private final RabbitMqProperties rabbitProperties;
-  private final JsonMapper jsonMapper;
+	private final RabbitTemplate rabbitTemplate;
 
-  public void publishDigitalSpecimen(DigitalSpecimenEvent digitalSpecimenEvent) {
-    rabbitTemplate.convertAndSend(rabbitProperties.getExchangeName(),
-        rabbitProperties.getRoutingKeyName(),
-        jsonMapper.writeValueAsString(digitalSpecimenEvent));
-  }
+	private final RabbitMqProperties rabbitProperties;
+
+	private final JsonMapper jsonMapper;
+
+	public void publishDigitalSpecimen(DigitalSpecimenEvent digitalSpecimenEvent) {
+		rabbitTemplate.convertAndSend(rabbitProperties.getExchangeName(), rabbitProperties.getRoutingKeyName(),
+				jsonMapper.writeValueAsString(digitalSpecimenEvent));
+	}
 
 }

@@ -181,9 +181,15 @@
         <configuration>
           <mainClass>eu.dissco.virtualcollectionservice.maven.MavenRunner</mainClass>
           <arguments>
-            <argument>https://schemas.dissco.tech/schemas/fdo-type/digital-specimen/0.4.0/digital-specimen.json</argument>
-            <argument>https://schemas.dissco.tech/schemas/fdo-type/digital-media/0.4.0/digital-media.json</argument>
-            <argument>https://schemas.dissco.tech/schemas/fdo-type/virtual-collection/0.2.0/virtual-collection.json</argument>
+            <argument>
+              https://schemas.dissco.tech/schemas/fdo-type/digital-specimen/0.4.0/digital-specimen.json
+            </argument>
+            <argument>
+              https://schemas.dissco.tech/schemas/fdo-type/digital-media/0.4.0/digital-media.json
+            </argument>
+            <argument>
+              https://schemas.dissco.tech/schemas/fdo-type/virtual-collection/0.2.0/virtual-collection.json
+            </argument>
           </arguments>
         </configuration>
       </plugin>
@@ -247,6 +253,11 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>io.spring.javaformat</groupId>
+        <artifactId>spring-javaformat-maven-plugin</artifactId>
+        <version>${spring-format.version}</version>
       </plugin>
     </plugins>
   </build>

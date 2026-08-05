@@ -1,20 +1,29 @@
 # dissco-virtual-collection-service
-This service will provide functionality to Create, Update or Remove EntityRelationships to a Virtual Collection.
-The application is built with Spring Boot and uses Spring Data Elasticsearch to interact with the Elasticsearch instance. 
-It also uses Spring AMQP to interact with the RabbitMQ message broker. 
-The application is designed to be deployed in a Kubernetes environment and can be run as a container.
+
+This service will provide functionality to Create, Update or Remove EntityRelationships to a Virtual
+Collection.
+The application is built with Spring Boot and uses Spring Data Elasticsearch to interact with the
+Elasticsearch instance.
+It also uses Spring AMQP to interact with the RabbitMQ message broker.
+The application is designed to be deployed in a Kubernetes environment and can be run as a
+container.
 
 It covers two functions.
+
 1. A new virtual collection has been created and digital specimen need to be updated.
-  - The application retrieves the messages from the queue
-  - It will call elasticSearch based on the filter in the Virtual Collection
-  - Add the EntityRelationship to the digital specimen
-  - Publish the updated digital specimen to the processing service
+
+- The application retrieves the messages from the queue
+- It will call elasticSearch based on the filter in the Virtual Collection
+- Add the EntityRelationship to the digital specimen
+- Publish the updated digital specimen to the processing service
+
 2. The second function will check if it needs to add an ER to any incoming Specimen
-  - On startup it will cache all VC's (will refresh every hour)
-  - For each specimen we will check with the Virtual Collection in the cache if the specimen matches any filters
-  - If the specimen matches a filter the ER to the VC will be added
-  - Specimen are published to the processing service
+
+- On startup it will cache all VC's (will refresh every hour)
+- For each specimen we will check with the Virtual Collection in the cache if the specimen matches
+  any filters
+- If the specimen matches a filter the ER to the VC will be added
+- Specimen are published to the processing service
 
 ## Run locally
 

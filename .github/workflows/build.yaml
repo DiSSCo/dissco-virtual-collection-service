@@ -4,7 +4,7 @@ on:
     branches:
       - main
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [ opened, synchronize, reopened ]
   schedule:
     - cron: "0 4  * * MON" # run on Monday at 4 AM
   workflow_dispatch:  # Allow manual triggering
@@ -37,10 +37,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar 
-                  -Dsonar.projectKey=DiSSCo_${{ github.event.repository.name }}
-                  -Dsonar.exclusions=**/jooq/**
-                  -Dsonar.coverage.exclusions=**/properties/**,**/configuration/**,**/domain/**,**/exception/**,**/maven/**
+        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+          -Dsonar.projectKey=DiSSCo_${{ github.event.repository.name }}
+          -Dsonar.exclusions=**/jooq/**
+          -Dsonar.coverage.exclusions=**/properties/**,**/configuration/**,**/domain/**,**/exception/**,**/maven/**
       - name: Build image
         run: |
           docker build -t ${{ github.event.repository.name }} .

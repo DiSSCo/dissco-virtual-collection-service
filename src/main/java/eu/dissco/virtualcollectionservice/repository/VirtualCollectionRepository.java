@@ -17,17 +17,19 @@ import tools.jackson.databind.json.JsonMapper;
 @RequiredArgsConstructor
 public class VirtualCollectionRepository {
 
-  private final DSLContext context;
-  private final JsonMapper jsonMapper;
+	private final DSLContext context;
 
-  public Set<VirtualCollection> getAllVirtualCollections() {
-    return new HashSet<>(context.select(VIRTUAL_COLLECTION.DATA).from(VIRTUAL_COLLECTION)
-        .where(VIRTUAL_COLLECTION.TOMBSTONED.isNull())
-        .fetchSet(jsonbRecord -> mapRecordToVirtualCollection(
-            jsonbRecord.getValue(VIRTUAL_COLLECTION.DATA))));
-  }
+	private final JsonMapper jsonMapper;
 
-  private VirtualCollection mapRecordToVirtualCollection(JSONB value) {
-    return jsonMapper.readValue(value.data(), VirtualCollection.class);
-  }
+	public Set<VirtualCollection> getAllVirtualCollections() {
+		return new HashSet<>(context.select(VIRTUAL_COLLECTION.DATA)
+			.from(VIRTUAL_COLLECTION)
+			.where(VIRTUAL_COLLECTION.TOMBSTONED.isNull())
+			.fetchSet(jsonbRecord -> mapRecordToVirtualCollection(jsonbRecord.getValue(VIRTUAL_COLLECTION.DATA))));
+	}
+
+	private VirtualCollection mapRecordToVirtualCollection(JSONB value) {
+		return jsonMapper.readValue(value.data(), VirtualCollection.class);
+	}
+
 }

@@ -17,24 +17,26 @@ import tools.jackson.databind.json.JsonMapper;
 @AllArgsConstructor
 public class RabbitMqConsumerService {
 
-  private final JsonMapper jsonMapper;
-  private final VirtualCollectionProcessingService virtualCollectionProcessingService;
-  private final DigitalSpecimenProcessingService digitalSpecimenProcessingService;
+	private final JsonMapper jsonMapper;
 
-  @RabbitListener(queues = {
-      "${rabbitmq.ingestion-queue-name:virtual-collection-ingestion-queue}"}, containerFactory = "consumerBatchContainerFactory")
-  public void getMessages(@Payload List<String> messages) {
-    var events = messages.stream()
-        .map(message -> jsonMapper.readValue(message, DigitalSpecimenEvent.class))
-        .filter(Objects::nonNull).toList();
-    digitalSpecimenProcessingService.handleIngestionEvents(events);
-  }
+	private final VirtualCollectionProcessingService virtualCollectionProcessingService;
 
-  @RabbitListener(queues = {
-      "${rabbitmq.queue-name:virtual-collection-queue}"})
-  public void getMessages(String message) throws IOException {
-    var virtualCollectionEvent = jsonMapper.readValue(message, VirtualCollectionEvent.class);
-    virtualCollectionProcessingService.handleMessage(virtualCollectionEvent);
-  }
+	private final DigitalSpecimenProcessingService digitalSpecimenProcessingService;
+
+	@RabbitListener(queues = { "${rabbitmq.ingestion-queue-name:virtual-collection-ingestion-queue}" },
+			containerFactory = "consumerBatchContainerFactory")
+	public void getMessages(@Payload List<String> messages) {
+		var events = messages.stream()
+			.map(message -> jsonMapper.readValue(message, DigitalSpecimenEvent.class))
+			.filter(Objects::nonNull)
+			.toList();
+		digitalSpecimenProcessingService.handleIngestionEvents(events);
+	}
+
+	@RabbitListener(queues = { "${rabbitmq.queue-name:virtual-collection-queue}" })
+	public void getMessages(String message) throws IOException {
+		var virtualCollectionEvent = jsonMapper.readValue(message, VirtualCollectionEvent.class);
+		virtualCollectionProcessingService.handleMessage(virtualCollectionEvent);
+	}
 
 }

@@ -22,89 +22,91 @@ import tools.jackson.databind.json.JsonMapper;
 @RequiredArgsConstructor
 public class SpecimenEvaluationComponent {
 
-  private final JsonMapper jsonMapper;
-  private final ParseContext jsonPath = JsonPath.using(
-      Configuration.defaultConfiguration()
-          .addOptions(Option.ALWAYS_RETURN_LIST)
-          .addOptions(Option.SUPPRESS_EXCEPTIONS));
+	private final JsonMapper jsonMapper;
 
-  public boolean evaluateSpecimen(DigitalSpecimen specimen,
-      TargetDigitalObjectFilter filter) {
-    if (filter.getOdsHasPredicates() == null || filter.getOdsHasPredicates().isEmpty()) {
-      return handleSinglePredicate(specimen, filter);
-    } else if (filter.getOdsHasPredicates() != null && !filter.getOdsHasPredicates().isEmpty()) {
-      return handleMultiplePredicates(specimen, filter);
-    } else {
-      throw new IllegalArgumentException(
-          "The filter must contain either a single predicate or a list of predicates");
-    }
-  }
+	private final ParseContext jsonPath = JsonPath.using(Configuration.defaultConfiguration()
+		.addOptions(Option.ALWAYS_RETURN_LIST)
+		.addOptions(Option.SUPPRESS_EXCEPTIONS));
 
-  private boolean handleMultiplePredicates(DigitalSpecimen specimen,
-      TargetDigitalObjectFilter filter) {
-    log.debug("Assuming this is a list of predicates: {}", filter);
-    var document = jsonPath.parse(jsonMapper.writeValueAsString(specimen));
-    for (var predicate : filter.getOdsHasPredicates()) {
-      var result = checkPredicate(document, predicate.getOdsPredicateType().value(),
-          predicate.getOdsPredicateKey(),
-          harmonizeValues(predicate.getOdsPredicateValue(), predicate.getOdsPredicateValues()));
-      if (result && filter.getOdsPredicateType().equals(OdsPredicateType.OR)) {
-        return true;
-      }
-      if (!result && filter.getOdsPredicateType().equals(OdsPredicateType.AND)) {
-        return false;
-      }
-    }
-    if (filter.getOdsPredicateType().equals(OdsPredicateType.AND)) {
-      return true;
-    } else if (filter.getOdsPredicateType().equals(OdsPredicateType.OR)) {
-      return false;
-    } else {
-      throw new IllegalArgumentException(
-          "When using a list of predicates, the predicate type must be either AND or OR");
-    }
-  }
+	public boolean evaluateSpecimen(DigitalSpecimen specimen, TargetDigitalObjectFilter filter) {
+		if (filter.getOdsHasPredicates() == null || filter.getOdsHasPredicates().isEmpty()) {
+			return handleSinglePredicate(specimen, filter);
+		}
+		else if (filter.getOdsHasPredicates() != null && !filter.getOdsHasPredicates().isEmpty()) {
+			return handleMultiplePredicates(specimen, filter);
+		}
+		else {
+			throw new IllegalArgumentException(
+					"The filter must contain either a single predicate or a list of predicates");
+		}
+	}
 
-  private boolean handleSinglePredicate(DigitalSpecimen specimen,
-      TargetDigitalObjectFilter filter) {
-    log.debug("Assuming this is an individual predicate: {}", filter);
-    var harmonizedValues = harmonizeValues(filter.getOdsPredicateValue(),
-        filter.getOdsPredicateValues());
-    var document = jsonPath.parse(jsonMapper.writeValueAsString(specimen));
-    return checkPredicate(document, filter.getOdsPredicateType().value(),
-        filter.getOdsPredicateKey(), harmonizedValues);
-  }
+	private boolean handleMultiplePredicates(DigitalSpecimen specimen, TargetDigitalObjectFilter filter) {
+		log.debug("Assuming this is a list of predicates: {}", filter);
+		var document = jsonPath.parse(jsonMapper.writeValueAsString(specimen));
+		for (var predicate : filter.getOdsHasPredicates()) {
+			var result = checkPredicate(document, predicate.getOdsPredicateType().value(),
+					predicate.getOdsPredicateKey(),
+					harmonizeValues(predicate.getOdsPredicateValue(), predicate.getOdsPredicateValues()));
+			if (result && filter.getOdsPredicateType().equals(OdsPredicateType.OR)) {
+				return true;
+			}
+			if (!result && filter.getOdsPredicateType().equals(OdsPredicateType.AND)) {
+				return false;
+			}
+		}
+		if (filter.getOdsPredicateType().equals(OdsPredicateType.AND)) {
+			return true;
+		}
+		else if (filter.getOdsPredicateType().equals(OdsPredicateType.OR)) {
+			return false;
+		}
+		else {
+			throw new IllegalArgumentException(
+					"When using a list of predicates, the predicate type must be either AND or OR");
+		}
+	}
 
-  private boolean checkPredicate(DocumentContext document, String predicateType,
-      String predicateKey, List<Object> predicateValues) {
-    if (predicateType.equals(OdsPredicateType.EQUALS.value()) && predicateValues.size() == 1) {
-      var result = document.read(predicateKey, ArrayList.class);
-      return matchesPredicate(predicateValues, result);
-    } else if (predicateType.equals(OdsPredicateType.NOT.value())
-        && predicateValues.size() == 1) {
-      var result = document.read(predicateKey, ArrayList.class);
-      return !matchesPredicate(predicateValues, result);
-    } else if (
-        (predicateType.equals(OdsPredicateType.IN.value()) || predicateType
-            .equals(OdsPredicateType.EQUALS.value())) && predicateValues.size() > 1) {
-      var result = document.read(predicateKey, ArrayList.class);
-      return matchPredicateArray(predicateValues, result);
-    } else {
-      throw new IllegalArgumentException(
-          "The predicate type is not supported for local evaluation: " + predicateType);
-    }
-  }
+	private boolean handleSinglePredicate(DigitalSpecimen specimen, TargetDigitalObjectFilter filter) {
+		log.debug("Assuming this is an individual predicate: {}", filter);
+		var harmonizedValues = harmonizeValues(filter.getOdsPredicateValue(), filter.getOdsPredicateValues());
+		var document = jsonPath.parse(jsonMapper.writeValueAsString(specimen));
+		return checkPredicate(document, filter.getOdsPredicateType().value(), filter.getOdsPredicateKey(),
+				harmonizedValues);
+	}
 
-  private static boolean matchPredicateArray(List<Object> predicateValues, ArrayList<?> result) {
-    for (var val : result) {
-      if (predicateValues.contains(val)) {
-        return true;
-      }
-    }
-    return false;
-  }
+	private boolean checkPredicate(DocumentContext document, String predicateType, String predicateKey,
+			List<Object> predicateValues) {
+		if (predicateType.equals(OdsPredicateType.EQUALS.value()) && predicateValues.size() == 1) {
+			var result = document.read(predicateKey, ArrayList.class);
+			return matchesPredicate(predicateValues, result);
+		}
+		else if (predicateType.equals(OdsPredicateType.NOT.value()) && predicateValues.size() == 1) {
+			var result = document.read(predicateKey, ArrayList.class);
+			return !matchesPredicate(predicateValues, result);
+		}
+		else if ((predicateType.equals(OdsPredicateType.IN.value())
+				|| predicateType.equals(OdsPredicateType.EQUALS.value())) && predicateValues.size() > 1) {
+			var result = document.read(predicateKey, ArrayList.class);
+			return matchPredicateArray(predicateValues, result);
+		}
+		else {
+			throw new IllegalArgumentException(
+					"The predicate type is not supported for local evaluation: " + predicateType);
+		}
+	}
 
-  private static boolean matchesPredicate(List<Object> predicateValues, ArrayList<?> result) {
-    return result.contains(predicateValues.getFirst());
-  }
+	private static boolean matchPredicateArray(List<Object> predicateValues, ArrayList<?> result) {
+		for (var val : result) {
+			if (predicateValues.contains(val)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static boolean matchesPredicate(List<Object> predicateValues, ArrayList<?> result) {
+		return result.contains(predicateValues.getFirst());
+	}
+
 }

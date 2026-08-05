@@ -14,35 +14,35 @@ import tools.jackson.databind.json.JsonMapper;
 @Service
 public class DigitalSpecimenProcessingService extends AbstractProcessingService {
 
-  private final VirtualCollectionCacheComponent cache;
-  private final RabbitMqPublisherService publisherService;
-  private final SpecimenEvaluationComponent specimenEvaluationComponent;
+	private final VirtualCollectionCacheComponent cache;
 
-  public DigitalSpecimenProcessingService(JsonMapper jsonMapper,
-      ApplicationProperties applicationProperties, VirtualCollectionCacheComponent cache,
-      RabbitMqPublisherService publisherService,
-      SpecimenEvaluationComponent specimenEvaluationComponent) {
-    super(jsonMapper, applicationProperties);
-    this.cache = cache;
-    this.publisherService = publisherService;
-    this.specimenEvaluationComponent = specimenEvaluationComponent;
-  }
+	private final RabbitMqPublisherService publisherService;
 
+	private final SpecimenEvaluationComponent specimenEvaluationComponent;
 
-  public void handleIngestionEvents(List<DigitalSpecimenEvent> events) {
-    log.info("Handling {} ingestion events", events.size());
-    for (var event : events) {
-      for (var virtualCollection : cache.getCache()) {
-        var specimen = event.digitalSpecimenWrapper().attributes();
-        if (specimenEvaluationComponent.evaluateSpecimen(specimen,
-            virtualCollection.getOdsHasTargetDigitalObjectFilter())) {
-          log.info("Adding specimen with id: {} to virtual collection with id: {}",
-              specimen.getOdsNormalisedPhysicalSpecimenID(), virtualCollection.getId());
-          addVirtualCollection(specimen, virtualCollection.getId(),
-              URI.create(virtualCollection.getId()));
-        }
-      }
-      publisherService.publishDigitalSpecimen(event);
-    }
-  }
+	public DigitalSpecimenProcessingService(JsonMapper jsonMapper, ApplicationProperties applicationProperties,
+			VirtualCollectionCacheComponent cache, RabbitMqPublisherService publisherService,
+			SpecimenEvaluationComponent specimenEvaluationComponent) {
+		super(jsonMapper, applicationProperties);
+		this.cache = cache;
+		this.publisherService = publisherService;
+		this.specimenEvaluationComponent = specimenEvaluationComponent;
+	}
+
+	public void handleIngestionEvents(List<DigitalSpecimenEvent> events) {
+		log.info("Handling {} ingestion events", events.size());
+		for (var event : events) {
+			for (var virtualCollection : cache.getCache()) {
+				var specimen = event.digitalSpecimenWrapper().attributes();
+				if (specimenEvaluationComponent.evaluateSpecimen(specimen,
+						virtualCollection.getOdsHasTargetDigitalObjectFilter())) {
+					log.info("Adding specimen with id: {} to virtual collection with id: {}",
+							specimen.getOdsNormalisedPhysicalSpecimenID(), virtualCollection.getId());
+					addVirtualCollection(specimen, virtualCollection.getId(), URI.create(virtualCollection.getId()));
+				}
+			}
+			publisherService.publishDigitalSpecimen(event);
+		}
+	}
+
 }

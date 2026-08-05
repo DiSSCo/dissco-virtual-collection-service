@@ -3,9 +3,7 @@
  */
 package eu.dissco.virtualcollectionservice.database.jooq;
 
-
 import eu.dissco.virtualcollectionservice.database.jooq.tables.VirtualCollection;
-
 
 /**
  * Convenience access to all tables in public.
@@ -13,8 +11,9 @@ import eu.dissco.virtualcollectionservice.database.jooq.tables.VirtualCollection
 @SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 public class Tables {
 
-    /**
-     * The table <code>public.virtual_collection</code>.
-     */
-    public static final VirtualCollection VIRTUAL_COLLECTION = VirtualCollection.VIRTUAL_COLLECTION;
+	/**
+	 * The table <code>public.virtual_collection</code>.
+	 */
+	public static final VirtualCollection VIRTUAL_COLLECTION = VirtualCollection.VIRTUAL_COLLECTION;
+
 }

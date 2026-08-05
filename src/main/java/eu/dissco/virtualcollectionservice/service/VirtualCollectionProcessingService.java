@@ -23,89 +23,81 @@ import tools.jackson.databind.json.JsonMapper;
 @Service
 public class VirtualCollectionProcessingService extends AbstractProcessingService {
 
-  private static final String ID_FIELD = "dcterms:identifier";
+	private static final String ID_FIELD = "dcterms:identifier";
 
-  private final ElasticSearchRepository elasticSearchRepository;
-  private final RabbitMqPublisherService rabbitMqPublisherService;
+	private final ElasticSearchRepository elasticSearchRepository;
 
+	private final RabbitMqPublisherService rabbitMqPublisherService;
 
-  public VirtualCollectionProcessingService(JsonMapper jsonMapper,
-      ElasticSearchRepository elasticSearchRepository,
-      RabbitMqPublisherService rabbitMqPublisherService,
-      ApplicationProperties applicationProperties) {
-    super(jsonMapper, applicationProperties);
-    this.elasticSearchRepository = elasticSearchRepository;
-    this.rabbitMqPublisherService = rabbitMqPublisherService;
-  }
+	public VirtualCollectionProcessingService(JsonMapper jsonMapper, ElasticSearchRepository elasticSearchRepository,
+			RabbitMqPublisherService rabbitMqPublisherService, ApplicationProperties applicationProperties) {
+		super(jsonMapper, applicationProperties);
+		this.elasticSearchRepository = elasticSearchRepository;
+		this.rabbitMqPublisherService = rabbitMqPublisherService;
+	}
 
-  public void handleMessage(VirtualCollectionEvent virtualCollectionEvent) throws IOException {
-    log.info("Received a {} request for virtual collection with id: {}",
-        virtualCollectionEvent.action(), virtualCollectionEvent.virtualCollection().getId());
-    var filter = virtualCollectionEvent.virtualCollection().getOdsHasTargetDigitalObjectFilter();
-    var elasticQuery = parseTargetFilterToQuery(filter);
-    var totalResult = processRequest(elasticQuery, virtualCollectionEvent);
-    log.info("Successfully finished processing all results: {} ", totalResult);
-  }
+	public void handleMessage(VirtualCollectionEvent virtualCollectionEvent) throws IOException {
+		log.info("Received a {} request for virtual collection with id: {}", virtualCollectionEvent.action(),
+				virtualCollectionEvent.virtualCollection().getId());
+		var filter = virtualCollectionEvent.virtualCollection().getOdsHasTargetDigitalObjectFilter();
+		var elasticQuery = parseTargetFilterToQuery(filter);
+		var totalResult = processRequest(elasticQuery, virtualCollectionEvent);
+		log.info("Successfully finished processing all results: {} ", totalResult);
+	}
 
-  private long processRequest(Query elasticQuery, VirtualCollectionEvent virtualCollectionEvent)
-      throws IOException {
-    boolean keepSearching = true;
-    long resultsProcessed = 0;
-    String lastId = null;
-    while (keepSearching) {
-      log.info("Paginating over elastic, resultsProcessed: {}", resultsProcessed);
-      var searchResult = elasticSearchRepository.retrieveObjects(lastId, "digital-specimen",
-          elasticQuery);
-      if (searchResult.isEmpty()) {
-        keepSearching = false;
-      } else {
-        processSearchResult(searchResult, virtualCollectionEvent);
-        lastId = searchResult.getLast().get(ID_FIELD).asString();
-        resultsProcessed += searchResult.size();
-      }
-    }
-    return resultsProcessed;
-  }
+	private long processRequest(Query elasticQuery, VirtualCollectionEvent virtualCollectionEvent) throws IOException {
+		boolean keepSearching = true;
+		long resultsProcessed = 0;
+		String lastId = null;
+		while (keepSearching) {
+			log.info("Paginating over elastic, resultsProcessed: {}", resultsProcessed);
+			var searchResult = elasticSearchRepository.retrieveObjects(lastId, "digital-specimen", elasticQuery);
+			if (searchResult.isEmpty()) {
+				keepSearching = false;
+			}
+			else {
+				processSearchResult(searchResult, virtualCollectionEvent);
+				lastId = searchResult.getLast().get(ID_FIELD).asString();
+				resultsProcessed += searchResult.size();
+			}
+		}
+		return resultsProcessed;
+	}
 
-  private void processSearchResult(List<JsonNode> searchResult,
-      VirtualCollectionEvent virtualCollectionEvent) {
-    log.info("Processing {} results", searchResult.size());
-    var virtualCollectionId = virtualCollectionEvent.virtualCollection().getId();
-    var virtualCollectionUri = URI.create(virtualCollectionId);
-    searchResult.stream().map(json -> jsonMapper.convertValue(json, DigitalSpecimen.class))
-        .forEach(digitalSpecimen -> {
-          log.info("Processing digital specimen with id: {}", digitalSpecimen.getId());
-          if (VirtualCollectionAction.CREATE.equals(virtualCollectionEvent.action())) {
-            addVirtualCollection(digitalSpecimen, virtualCollectionId, virtualCollectionUri);
-          } else {
-            removeVirtualCollection(digitalSpecimen, virtualCollectionId, virtualCollectionUri);
-          }
-          var digitalSpecimenEvent = wrapIntoEvent(digitalSpecimen);
-          rabbitMqPublisherService.publishDigitalSpecimen(digitalSpecimenEvent);
-        });
-  }
+	private void processSearchResult(List<JsonNode> searchResult, VirtualCollectionEvent virtualCollectionEvent) {
+		log.info("Processing {} results", searchResult.size());
+		var virtualCollectionId = virtualCollectionEvent.virtualCollection().getId();
+		var virtualCollectionUri = URI.create(virtualCollectionId);
+		searchResult.stream()
+			.map(json -> jsonMapper.convertValue(json, DigitalSpecimen.class))
+			.forEach(digitalSpecimen -> {
+				log.info("Processing digital specimen with id: {}", digitalSpecimen.getId());
+				if (VirtualCollectionAction.CREATE.equals(virtualCollectionEvent.action())) {
+					addVirtualCollection(digitalSpecimen, virtualCollectionId, virtualCollectionUri);
+				}
+				else {
+					removeVirtualCollection(digitalSpecimen, virtualCollectionId, virtualCollectionUri);
+				}
+				var digitalSpecimenEvent = wrapIntoEvent(digitalSpecimen);
+				rabbitMqPublisherService.publishDigitalSpecimen(digitalSpecimenEvent);
+			});
+	}
 
-  private void removeVirtualCollection(DigitalSpecimen digitalSpecimen, String virtualCollectionId,
-      URI virtualCollectionURI) {
-    log.info("Removing virtual collection with id: {} from digital specimen with id: {}",
-        virtualCollectionId, digitalSpecimen.getId());
-    digitalSpecimen.setOdsHasEntityRelationships(
-        digitalSpecimen.getOdsHasEntityRelationships().stream()
-            .filter(er -> !er.getOdsRelatedResourceURI().equals(virtualCollectionURI)).toList());
-  }
+	private void removeVirtualCollection(DigitalSpecimen digitalSpecimen, String virtualCollectionId,
+			URI virtualCollectionURI) {
+		log.info("Removing virtual collection with id: {} from digital specimen with id: {}", virtualCollectionId,
+				digitalSpecimen.getId());
+		digitalSpecimen.setOdsHasEntityRelationships(digitalSpecimen.getOdsHasEntityRelationships()
+			.stream()
+			.filter(er -> !er.getOdsRelatedResourceURI().equals(virtualCollectionURI))
+			.toList());
+	}
 
-  private DigitalSpecimenEvent wrapIntoEvent(DigitalSpecimen digitalSpecimen) {
-    return new DigitalSpecimenEvent(
-        Collections.emptySet(),
-        new DigitalSpecimenWrapper(
-            digitalSpecimen.getOdsNormalisedPhysicalSpecimenID(),
-            digitalSpecimen.getOdsFdoType(),
-            digitalSpecimen,
-            null
-        ),
-        Collections.emptyList(),
-        false,
-        false
-    );
-  }
+	private DigitalSpecimenEvent wrapIntoEvent(DigitalSpecimen digitalSpecimen) {
+		return new DigitalSpecimenEvent(Collections.emptySet(),
+				new DigitalSpecimenWrapper(digitalSpecimen.getOdsNormalisedPhysicalSpecimenID(),
+						digitalSpecimen.getOdsFdoType(), digitalSpecimen, null),
+				Collections.emptyList(), false, false);
+	}
+
 }

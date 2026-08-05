@@ -16,29 +16,29 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class VirtualCollectionCacheComponent {
 
-  private final VirtualCollectionRepository repository;
+	private final VirtualCollectionRepository repository;
 
-  private Set<VirtualCollection> cache;
+	private Set<VirtualCollection> cache;
 
-  @Locked.Write
-  @PostConstruct
-  public void fillCache() {
-    cache = repository.getAllVirtualCollections();
-    log.info("Virtual Collection Cache Initialized, total Virtual Collections: {}", cache.size());
-  }
+	@Locked.Write
+	@PostConstruct
+	public void fillCache() {
+		cache = repository.getAllVirtualCollections();
+		log.info("Virtual Collection Cache Initialized, total Virtual Collections: {}", cache.size());
+	}
 
-  @Locked.Read
-  public Set<VirtualCollection> getCache() {
-    return Set.copyOf(cache);
-  }
+	@Locked.Read
+	public Set<VirtualCollection> getCache() {
+		return Set.copyOf(cache);
+	}
 
-  @Locked.Write
-  @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.HOURS)
-  public void refreshCache() {
-    log.info("Refreshing Virtual Collection Cache");
-    cache.clear();
-    cache.addAll(repository.getAllVirtualCollections());
-    log.info("Virtual Collection Cache refreshed, total Virtual Collections: {}", cache.size());
-  }
+	@Locked.Write
+	@Scheduled(fixedDelay = 1, timeUnit = TimeUnit.HOURS)
+	public void refreshCache() {
+		log.info("Refreshing Virtual Collection Cache");
+		cache.clear();
+		cache.addAll(repository.getAllVirtualCollections());
+		log.info("Virtual Collection Cache refreshed, total Virtual Collections: {}", cache.size());
+	}
 
 }

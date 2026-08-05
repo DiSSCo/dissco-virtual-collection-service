@@ -30,84 +30,84 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class DigitalSpecimenProcessingTest {
 
-  private static MockedStatic<Instant> mockedInstant;
-  private static MockedStatic<Clock> mockedClock;
+	private static MockedStatic<Instant> mockedInstant;
 
-  @Mock
-  private VirtualCollectionCacheComponent cache;
-  @Mock
-  private RabbitMqPublisherService publisherService;
-  @Mock
-  private SpecimenEvaluationComponent evaluationComponent;
+	private static MockedStatic<Clock> mockedClock;
 
-  private DigitalSpecimenProcessingService processingService;
+	@Mock
+	private VirtualCollectionCacheComponent cache;
 
-  private static void tearDownClock() {
-    mockedInstant.close();
-    mockedClock.close();
-  }
+	@Mock
+	private RabbitMqPublisherService publisherService;
 
-  private static void setUpInstantNow() {
-    Clock clock = Clock.fixed(CREATED, ZoneOffset.UTC);
-    Instant instant = Instant.now(clock);
-    mockedInstant = mockStatic(Instant.class);
-    mockedInstant.when(Instant::now).thenReturn(instant);
-    mockedInstant.when(() -> Instant.from(any())).thenReturn(instant);
-    mockedInstant.when(() -> Instant.parse(any())).thenReturn(instant);
-    mockedClock = mockStatic(Clock.class);
-    mockedClock.when(Clock::systemUTC).thenReturn(clock);
-  }
+	@Mock
+	private SpecimenEvaluationComponent evaluationComponent;
 
-  @BeforeEach
-  void setUp() {
-    processingService = new DigitalSpecimenProcessingService(MAPPER, new ApplicationProperties(),
-        cache, publisherService, evaluationComponent);
-  }
+	private DigitalSpecimenProcessingService processingService;
 
-  @Test
-  void handleIngestionEvents() {
-    // Given
-    var virtualCollection = givenVirtualCollection();
-    var secondFilter = new TargetDigitalObjectFilter()
-        .withOdsPredicateType(OdsPredicateType.EQUALS)
-        .withOdsPredicateKey("$['ods:topicDiscipline']")
-        .withOdsPredicateValue("Geology");
-    var digitalSpecimen = givenDigitalSpecimenEvent();
-    given(cache.getCache()).willReturn(Set.of(virtualCollection,
-        givenVirtualCollection("https://hdl.handle.net/TEST/YYY-YYY-YYY", "Another VC", secondFilter
-        )));
-    // Mock needs to be behind the cache
-    setUpInstantNow();
-    given(
-        evaluationComponent.evaluateSpecimen(digitalSpecimen.digitalSpecimenWrapper().attributes(),
-            virtualCollection.getOdsHasTargetDigitalObjectFilter())).willReturn(true);
-    given(
-        evaluationComponent.evaluateSpecimen(digitalSpecimen.digitalSpecimenWrapper().attributes(),
-            secondFilter)).willReturn(false);
+	private static void tearDownClock() {
+		mockedInstant.close();
+		mockedClock.close();
+	}
 
-    // When
-    processingService.handleIngestionEvents(List.of(digitalSpecimen));
+	private static void setUpInstantNow() {
+		Clock clock = Clock.fixed(CREATED, ZoneOffset.UTC);
+		Instant instant = Instant.now(clock);
+		mockedInstant = mockStatic(Instant.class);
+		mockedInstant.when(Instant::now).thenReturn(instant);
+		mockedInstant.when(() -> Instant.from(any())).thenReturn(instant);
+		mockedInstant.when(() -> Instant.parse(any())).thenReturn(instant);
+		mockedClock = mockStatic(Clock.class);
+		mockedClock.when(Clock::systemUTC).thenReturn(clock);
+	}
 
-    // Then
-    then(publisherService).should().publishDigitalSpecimen(givenDigitalSpecimenEventWithVC(true));
-    tearDownClock();
-  }
+	@BeforeEach
+	void setUp() {
+		processingService = new DigitalSpecimenProcessingService(MAPPER, new ApplicationProperties(), cache,
+				publisherService, evaluationComponent);
+	}
 
-  @Test
-  void handleIngestionEventsNoMatch() {
-    // Given
-    var virtualCollection = givenVirtualCollection();
-    var digitalSpecimen = givenDigitalSpecimenEvent();
-    given(cache.getCache()).willReturn(Set.of(virtualCollection));
-    given(
-        evaluationComponent.evaluateSpecimen(digitalSpecimen.digitalSpecimenWrapper().attributes(),
-            virtualCollection.getOdsHasTargetDigitalObjectFilter())).willReturn(false);
+	@Test
+	void handleIngestionEvents() {
+		// Given
+		var virtualCollection = givenVirtualCollection();
+		var secondFilter = new TargetDigitalObjectFilter().withOdsPredicateType(OdsPredicateType.EQUALS)
+			.withOdsPredicateKey("$['ods:topicDiscipline']")
+			.withOdsPredicateValue("Geology");
+		var digitalSpecimen = givenDigitalSpecimenEvent();
+		given(cache.getCache()).willReturn(Set.of(virtualCollection,
+				givenVirtualCollection("https://hdl.handle.net/TEST/YYY-YYY-YYY", "Another VC", secondFilter)));
+		// Mock needs to be behind the cache
+		setUpInstantNow();
+		given(evaluationComponent.evaluateSpecimen(digitalSpecimen.digitalSpecimenWrapper().attributes(),
+				virtualCollection.getOdsHasTargetDigitalObjectFilter()))
+			.willReturn(true);
+		given(evaluationComponent.evaluateSpecimen(digitalSpecimen.digitalSpecimenWrapper().attributes(), secondFilter))
+			.willReturn(false);
 
-    // When
-    processingService.handleIngestionEvents(List.of(digitalSpecimen));
+		// When
+		processingService.handleIngestionEvents(List.of(digitalSpecimen));
 
-    // Then
-    then(publisherService).should().publishDigitalSpecimen(digitalSpecimen);
-  }
+		// Then
+		then(publisherService).should().publishDigitalSpecimen(givenDigitalSpecimenEventWithVC(true));
+		tearDownClock();
+	}
+
+	@Test
+	void handleIngestionEventsNoMatch() {
+		// Given
+		var virtualCollection = givenVirtualCollection();
+		var digitalSpecimen = givenDigitalSpecimenEvent();
+		given(cache.getCache()).willReturn(Set.of(virtualCollection));
+		given(evaluationComponent.evaluateSpecimen(digitalSpecimen.digitalSpecimenWrapper().attributes(),
+				virtualCollection.getOdsHasTargetDigitalObjectFilter()))
+			.willReturn(false);
+
+		// When
+		processingService.handleIngestionEvents(List.of(digitalSpecimen));
+
+		// Then
+		then(publisherService).should().publishDigitalSpecimen(digitalSpecimen);
+	}
 
 }

@@ -18,27 +18,29 @@ import tools.jackson.databind.node.ObjectNode;
 @AllArgsConstructor
 public class ElasticSearchRepository {
 
-  private static final String SORT_BY = "dcterms:identifier.keyword";
-  private final ElasticsearchClient client;
-  private final ElasticSearchProperties properties;
+	private static final String SORT_BY = "dcterms:identifier.keyword";
 
-  public List<JsonNode> retrieveObjects(String lastId, String index, Query query)
-      throws IOException {
-    var searchRequestBuilder = new SearchRequest.Builder()
-        .index(index)
-        .query(query)
-        .trackTotalHits(t -> t.enabled(Boolean.TRUE))
-        .size(properties.getPageSize())
-        .sort(s -> s.field(f -> f.field(SORT_BY).order(SortOrder.Desc)));
-    if (lastId != null) {
-      searchRequestBuilder
-          .searchAfter(sa -> sa.stringValue(lastId));
-    }
-    var searchResult = client.search(searchRequestBuilder.build(), ObjectNode.class);
-    return searchResult.hits().hits().stream()
-        .map(Hit::source)
-        .filter(Objects::nonNull)
-        .map(JsonNode.class::cast)
-        .toList();
-  }
+	private final ElasticsearchClient client;
+
+	private final ElasticSearchProperties properties;
+
+	public List<JsonNode> retrieveObjects(String lastId, String index, Query query) throws IOException {
+		var searchRequestBuilder = new SearchRequest.Builder().index(index)
+			.query(query)
+			.trackTotalHits(t -> t.enabled(Boolean.TRUE))
+			.size(properties.getPageSize())
+			.sort(s -> s.field(f -> f.field(SORT_BY).order(SortOrder.Desc)));
+		if (lastId != null) {
+			searchRequestBuilder.searchAfter(sa -> sa.stringValue(lastId));
+		}
+		var searchResult = client.search(searchRequestBuilder.build(), ObjectNode.class);
+		return searchResult.hits()
+			.hits()
+			.stream()
+			.map(Hit::source)
+			.filter(Objects::nonNull)
+			.map(JsonNode.class::cast)
+			.toList();
+	}
+
 }
