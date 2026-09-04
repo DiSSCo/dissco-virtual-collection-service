@@ -13,6 +13,7 @@ import co.elastic.clients.transport.rest5_client.Rest5ClientTransport;
 import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
 import eu.dissco.virtualcollectionservice.property.ElasticSearchProperties;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
 import org.apache.hc.core5.http.Header;
@@ -36,7 +37,8 @@ class ElasticSearchRepositoryIT {
   private static final String ELASTICSEARCH_USERNAME = "elastic";
   private static final String ELASTICSEARCH_PASSWORD = "s3cret";
   private static final ElasticsearchContainer container = new ElasticsearchContainer(
-      ELASTIC_IMAGE).withPassword(ELASTICSEARCH_PASSWORD);
+      ELASTIC_IMAGE).withPassword(ELASTICSEARCH_PASSWORD)
+      .withStartupTimeout(Duration.ofMinutes(2));
   private static final String DIGITAL_SPECIMEN_INDEX = "digital-specimen";
   private static ElasticsearchClient client;
   private static Rest5Client restClient;
